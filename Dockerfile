@@ -55,4 +55,5 @@ EXPOSE ${PORT}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import httpx; httpx.get('http://127.0.0.1:${PORT}/metrics/')" || exit 1
 
-CMD ["sh", "-c", "exec uvicorn asgi:app --host 0.0.0.0 --port ${PORT}"]
+ENTRYPOINT ["sh", "-c"]
+CMD ["exec uvicorn asgi:app --host 0.0.0.0 --port ${PORT}"]
