@@ -1,5 +1,5 @@
 ARG PYTHON_VERSION=3.12
-ARG PORT=8080
+ARG PORT=8300
 
 # --- Build stage ---
 FROM python:${PYTHON_VERSION}-slim AS builder
@@ -50,6 +50,6 @@ USER flowdacity
 EXPOSE ${PORT}
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import os, httpx; port = os.environ.get('PORT', '8080'); r = httpx.get(f'http://127.0.0.1:{port}/metrics/'); raise SystemExit(0 if r.status_code < 400 else 1)"
+    CMD python -c "import os, httpx; port = os.environ.get('PORT', '8300'); r = httpx.get(f'http://127.0.0.1:{port}/metrics/'); raise SystemExit(0 if r.status_code < 400 else 1)"
 
 CMD ["sh", "-c", "exec uvicorn asgi:app --host 0.0.0.0 --port ${PORT}"]
