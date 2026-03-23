@@ -15,7 +15,7 @@ WORKDIR /app
 # Copy uv from official image for better security and updates
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
@@ -53,7 +53,7 @@ USER appuser
 EXPOSE ${PORT}
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://127.0.0.1:${PORT}/metrics/')" || exit 1
+    CMD python -c "import os, httpx; port = os.environ.get('PORT', '8080'); httpx.get(f'http://127.0.0.1:{port}/metrics/')" || exit 1
 
 ENTRYPOINT ["sh", "-c"]
-CMD ["exec uvicorn asgi:app --host 0.0.0.0 --port ${PORT}"]
+CMD exec uvicorn asgi:app --host 0.0.0.0 --port ${PORT}
