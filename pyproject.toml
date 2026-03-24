@@ -1,11 +1,11 @@
 [project]
-name = "flowdacity-queue-server"
-version = "0.1.0"
-description = "An API queuing server based on the Flowdacity Queue (FQ) library."
+name = "queue-server"
+version = "1.0.0"
+description = "An API queuing server based on the Flowdacity Queue Engine library."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "flowdacity-queue @ git+https://github.com/flowdacity/flowdacity-queue.git@v1.0.0",
+    "flowdacity-queue>=1.0.0",
     "httpx>=0.28.1",
     "msgpack>=1.1.2",
     "pydantic>=2.0.0",
