@@ -3,6 +3,7 @@ Configuration
 =============
 
 Flowdacity Queue Server reads its runtime configuration from environment variables.
+Settings are validated at startup with ``pydantic-settings``.
 
 Queue settings
 --------------

@@ -31,6 +31,7 @@ pip install pytest pytest-cov
 ## Configuration
 
 The server reads all queue and Redis settings from environment variables. No config file is required.
+Values are validated at startup with `pydantic-settings`.
 
 | Variable | Default | Description |
 | --- | --- | --- |
