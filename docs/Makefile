@@ -85,17 +85,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/fqserver.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/flowdacity-queue-server.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/fqserver.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/flowdacity-queue-server.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/fqserver"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/fqserver"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/flowdacity-queue-server"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/flowdacity-queue-server"
 	@echo "# devhelp"
 
 epub:

@@ -39,13 +39,13 @@ DEFAULT_FQ_ENV_CONFIG = {
 
 def _coerce_bool(value: str, env_var: str) -> bool:
     normalized = value.strip().lower()
-    if normalized in {"1", "true", "yes", "on"}:
+    if normalized == "true":
         return True
-    if normalized in {"0", "false", "no", "off"}:
+    if normalized == "false":
         return False
     raise ValueError(
         f"Invalid boolean value for {env_var}: {value!r}. "
-        "Use one of: 1, 0, true, false, yes, no, on, off."
+        "Use either 'true' or 'false'."
     )
 
 
@@ -443,7 +443,7 @@ class FQServer(object):
         response = {"status": "failure"}
         request_data = {}
 
-        # matches Flask defaults: queue_type and/or queue_id may be absent
+        # queue_type and/or queue_id may be absent depending on the route
         queue_type = request.path_params.get("queue_type")
         queue_id = request.path_params.get("queue_id")
 

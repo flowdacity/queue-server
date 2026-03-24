@@ -2,14 +2,16 @@
 License
 =======
 
-SHARQ Server is released under the `MIT License <http://opensource.org/licenses/MIT>`_.
-
+Flowdacity Queue Server is released under the `MIT License <http://opensource.org/licenses/MIT>`_.
+The project inherits historical copyright notices from its upstream origins and
+also includes current Flowdacity copyright.
 
 ::
 
     The MIT License (MIT)
 
     Copyright (c) 2014 Plivo Inc
+    Copyright (c) 2025 Flowdacity Development Team
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal

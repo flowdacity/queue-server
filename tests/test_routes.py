@@ -83,7 +83,10 @@ class FQConfigTestCase(unittest.TestCase):
             build_config_from_env({"FQ_REDIS_PORT": "redis"})
 
         with self.assertRaisesRegex(ValueError, "FQ_ENABLE_REQUEUE_SCRIPT"):
-            build_config_from_env({"FQ_ENABLE_REQUEUE_SCRIPT": "maybe"})
+            build_config_from_env({"FQ_ENABLE_REQUEUE_SCRIPT": "yes"})
+
+        with self.assertRaisesRegex(ValueError, "FQ_REDIS_CLUSTERED"):
+            build_config_from_env({"FQ_REDIS_CLUSTERED": "1"})
 
 
 class FQServerTestCase(unittest.IsolatedAsyncioTestCase):

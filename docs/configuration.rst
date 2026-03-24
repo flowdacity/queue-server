@@ -41,7 +41,7 @@ Redis settings
     Redis password. Leave empty when authentication is not required.
 
 ``FQ_REDIS_CLUSTERED``
-    Enables Redis Cluster mode when set to a truthy value.
+    Enables Redis Cluster mode when set to ``true``.
 
 ``FQ_REDIS_UNIX_SOCKET_PATH``
     Redis unix socket path when ``FQ_REDIS_CONN_TYPE=unix_sock``.
@@ -82,5 +82,4 @@ Defaults
 Boolean values
 --------------
 
-Boolean environment variables accept ``1``, ``0``, ``true``, ``false``, ``yes``,
-``no``, ``on``, and ``off``.
+Boolean environment variables accept only ``true`` and ``false``.

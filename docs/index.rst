@@ -1,13 +1,15 @@
-Welcome to SHARQ!
-=================
+Flowdacity Queue Server
+=======================
 
-SHARQ is a flexible, open source, rate limited queuing system. Based on the `Leaky Bucket Algorithm <http://en.wikipedia.org/wiki/Leaky_bucket#The_Leaky_Bucket_Algorithm_as_a_Queue>`_, `SHARQ <https://github.com/plivo/fq-server>`_ lets you create queues dynamically and update their rate limits in real time.
+Flowdacity Queue Server is an async HTTP API for `Flowdacity Queue (FQ) <https://github.com/flowdacity/flowdacity-queue>`_.
+It runs on Starlette and Uvicorn, stores queue state in Redis through the FQ core,
+and exposes HTTP endpoints for enqueueing, dequeueing, finishing, requeueing, and
+inspecting jobs.
 
-SHARQ consists of two components - the core component and the server component. The SHARQ core is built on `Redis <https://redis.io/>`_, using Python and Lua, and the SHARQ Server is built using `Flask <http://flask.pocoo.org/>`_ and `Gevent <http://www.gevent.org/>`_ and talks HTTP.
+The server is configured entirely through environment variables and is designed to
+fit containerized deployments without mounted config files.
 
-SHARQ is released under the permissive `MIT License <https://github.com/plivo/fq-server/blob/master/LICENSE.txt>`_ and is `available on Github <https://github.com/plivo/fq-server>`_!
-
-To learn more about SHARQ, check out the `getting started section <gettingstarted.html>`_.
+To learn more, start with the `getting started guide <gettingstarted.html>`_.
 
 .. toctree::
    :maxdepth: 2

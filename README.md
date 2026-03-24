@@ -48,7 +48,7 @@ The server reads all queue and Redis settings from environment variables. No con
 | `FQ_REDIS_UNIX_SOCKET_PATH` | `/tmp/redis.sock` | Redis socket path when `FQ_REDIS_CONN_TYPE=unix_sock`. |
 | `PORT` | `8300` | Uvicorn port used by the container and local examples. |
 
-Boolean env vars accept `1`, `0`, `true`, `false`, `yes`, `no`, `on`, or `off`.
+Boolean env vars accept only `true` or `false`.
 
 ## Run locally
 

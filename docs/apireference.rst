@@ -2,353 +2,218 @@
 API Reference
 =============
 
-This section contains a very brief introduction to the SHARQ API. If you are looking to get started with SHARQ, refer to the `getting started section <gettingstarted.html>`_ before reading this.
+This document describes the HTTP API exposed by Flowdacity Queue Server. All
+documented routes include a trailing slash.
+
+Root
+~~~~
+
+::
+
+    GET /
+
+Response:
+
+.. code-block:: json
+
+    {
+      "message": "Hello, FQS!"
+    }
 
 Enqueue
 ~~~~~~~
-
-Enqueue a job into the SHARQ Server.
 
 ::
 
     POST /enqueue/<queue_type>/<queue_id>/
 
-**Request (Raw JSON POST data):**
+Request body:
 
-::
+.. code-block:: json
 
     {
-      "job_id": "b81c07a7-5bba-4790-ab40-a061994088c1",
+      "job_id": "job-1",
       "interval": 1000,
-      "payload": {"hello": "world"}
+      "payload": {
+        "message": "hello, world"
+      }
     }
 
-**Response (success):**
+Optional request fields:
 
-Status Code: 201
+* ``requeue_limit``: override the default retry limit for the job.
+* ``payload.max_queued_length``: reject the enqueue with HTTP ``429`` if the queue
+  already contains at least that many jobs.
 
-::
+Success response:
+
+* HTTP ``201``
+* Body:
+
+.. code-block:: json
 
     {
       "status": "queued"
     }
 
-**Response (bad request):**
-
-Status Code: 400
-
-::
-
-    {
-        "message": "`queue_type` is a mandatory parameter",
-        "status": "failure"
-    }
-
-**cURL Example:**
-
-::
-
-    $curl -H "Accept: application/json" \
-    -H "Content-type: application/json" \
-    -X POST -d ' {"job_id": "b81c07a7-5bba-4790-ab40-a061994088c1", "interval": 1000, "payload": {"hello": "world"}}' \
-    http://localhost:8080/enqueue/sms/1/
-
-
 Dequeue
 ~~~~~~~
 
-Dequeue a job from the SHARQ Server.
-
 ::
 
+    GET /dequeue/
     GET /dequeue/<queue_type>/
 
-**Response (success):**
+``/dequeue/`` uses the default queue type ``default``.
 
-Status Code: 200
+Success response:
 
-::
+* HTTP ``200``
+* Body:
+
+.. code-block:: json
 
     {
-      "job_id": "b81c07a7-5bba-4790-ab40-a061994088c1",
+      "status": "success",
+      "queue_id": "user42",
+      "job_id": "job-1",
       "payload": {
-        "hello": "world"
+        "message": "hello, world"
       },
-      "queue_id": "1",
-      "status": "success"
+      "requeues_remaining": -1,
+      "current_queue_length": 0
     }
 
-**Response (queue has no job ready):**
+If no job is ready, the server returns HTTP ``404`` with:
 
-Status Code: 404
-
-::
+.. code-block:: json
 
     {
-        "status": "failure"
+      "status": "failure"
     }
-
-**Response (bad request):** Status Code: 400
-
-::
-
-    {
-        "message": "`queue_type` has an invalid value.",
-        "status": "failure"
-    }
-
-**cURL Example:**
-
-::
-
-    curl http://localhost:8080/dequeue/sms/
 
 Finish
 ~~~~~~
-
-Mark a dequeued job as finished.
 
 ::
 
     POST /finish/<queue_type>/<queue_id>/<job_id>/
 
-**Response (success):**
+Success response:
 
-Status Code: 200
+* HTTP ``200``
+* Body:
 
-::
+.. code-block:: json
 
     {
       "status": "success"
     }
 
-**Response (job was not found):**
-
-Status Code: 404
-
-::
-
-    {
-      "status": "failure"
-    }
-
-**Response (bad request):**
-
-Status Code: 400
-
-::
-
-    {
-        "message": "`queue_id` is a mandatory parameter",
-        "status": "failure"
-    }
-
-**cURL Example:**
-
-::
-
-    curl -X POST http://localhost:8080/finish/sms/1/b81c07a7-5bba-4790-ab40-a061994088c1/
+If the active job is not found, the server returns HTTP ``404``.
 
 Interval
 ~~~~~~~~
-
-Updates the interval (and effectively the rate) of any queue. The interval has to be specified in the request body, in the JSON format as shown below:
 
 ::
 
     POST /interval/<queue_type>/<queue_id>/
 
-**Request (Raw JSON POST data):**
+Request body:
 
-::
+.. code-block:: json
 
     {
-      "interval": 1000
+      "interval": 5000
     }
 
-**Response (success):**
+Success response:
 
-Status Code: 200
-
-::
+.. code-block:: json
 
     {
       "status": "success"
     }
 
-**Response (queue was not found):**
-
-Status Code: 404
-
-::
-
-    {
-      "status": "failure"
-    }
-
-**Response (bad request):**
-
-Status Code: 400
-
-::
-
-    {
-      "message": "`interval` has an invalid value.",
-      "status": "failure"
-    }
-
-**cURL Example:**
-
-::
-
-    curl -H "Accept: application/json" \
-    -H "Content-type: application/json" \
-    -X POST -d ' {"interval": 5000}' \
-    http://localhost:8080/interval/sms/1/
-
+If the queue does not exist, the server returns HTTP ``404``.
 
 Metrics
 ~~~~~~~
 
-The Metrics API enables getting basic metrics from the SHARQ Server.
-
-Global Metrics
-^^^^^^^^^^^^^^
-
-Fetches metrics on a global level (the consolidated metrics of all queues in SHARQ) from the SHARQ Server. The response to the API request, contains the enqueue and dequeue counts which show the number of enqueues and dequeues in each minute over a period of 10 minutes.
+Global metrics:
 
 ::
 
     GET /metrics/
 
-**Response (success):**
+Response fields:
 
-Status Code: 200
+* ``queue_types``
+* ``enqueue_counts``
+* ``dequeue_counts``
+* ``status``
 
-::
-
-    {
-      "dequeue_counts": {
-        "1406200290000": 0,
-        "1406200344000": 0,
-        "1406200392000": 0,
-        "1406200434000": 0,
-        "1406200470000": 0,
-        "1406200500000": 0,
-        "1406200524000": 0,
-        "1406200542000": 0,
-        "1406200554000": 0,
-        "1406200560000": 0
-      },
-      "enqueue_counts": {
-        "1406200290000": 0,
-        "1406200344000": 0,
-        "1406200392000": 0,
-        "1406200434000": 0,
-        "1406200470000": 0,
-        "1406200500000": 0,
-        "1406200524000": 0,
-        "1406200542000": 0,
-        "1406200554000": 0,
-        "1406200560000": 0
-      },
-      "queue_types": [
-        "sms"
-      ],
-      "status": "success"
-    }
-
-**cURL Example:**
-
-::
-
-    curl  http://localhost:8080/metrics/
-
-List Queue Ids
-^^^^^^^^^^^^^^
-
-Lists all the queues of a particular queue type in the SHARQ Server.
+Queue IDs for a queue type:
 
 ::
 
     GET /metrics/<queue_type>/
 
-**Response (success):**
+Response fields:
 
-Status Code: 200
+* ``queue_ids``
+* ``status``
 
-::
-
-    {
-      "queue_ids": [
-        "1"
-      ],
-      "status": "success"
-    }
-
-**cURL Example:**
-
-::
-
-    curl  http://localhost:8080/metrics/sms/
-
-Queue Specific Metrics
-^^^^^^^^^^^^^^^^^^^^^^
-
-Fetches metrics specific to a particular queue of a specific queue type. The response to the API request contains the enqueue and dequeue counts for each minute over a 10 minute period. The response also contains the length of the queue at that particular point in time.
+Queue-specific metrics:
 
 ::
 
     GET /metrics/<queue_type>/<queue_id>/
 
-**Response (success):**
+Response fields:
 
-Status Code: 200
+* ``queue_length``
+* ``enqueue_counts``
+* ``dequeue_counts``
+* ``status``
+
+Delete Queue
+~~~~~~~~~~~~
 
 ::
 
+    DELETE /deletequeue/<queue_type>/<queue_id>/
+
+Optional request body:
+
+.. code-block:: json
+
     {
-      "dequeue_counts": {
-        "1406200590000": 0,
-        "1406200644000": 0,
-        "1406200692000": 0,
-        "1406200734000": 0,
-        "1406200770000": 0,
-        "1406200800000": 0,
-        "1406200824000": 0,
-        "1406200842000": 0,
-        "1406200854000": 0,
-        "1406200860000": 0
-      },
-      "enqueue_counts": {
-        "1406200590000": 0,
-        "1406200644000": 0,
-        "1406200692000": 0,
-        "1406200734000": 0,
-        "1406200770000": 0,
-        "1406200800000": 0,
-        "1406200824000": 0,
-        "1406200842000": 0,
-        "1406200854000": 0,
-        "1406200860000": 0
-      },
-      "queue_length": 3,
+      "purge_all": true
+    }
+
+This removes queued jobs for the target queue. When ``purge_all`` is ``true``,
+related payload and interval metadata are removed as well.
+
+Deep Status
+~~~~~~~~~~~
+
+::
+
+    GET /deepstatus/
+
+If Redis is reachable and writable, the server returns:
+
+.. code-block:: json
+
+    {
       "status": "success"
     }
 
-**Response (bad request):**
+Common failures
+~~~~~~~~~~~~~~~
 
-Status Code: 400
-
-::
-
-    {
-        "message": "`queue_id` should be accompanied by `queue_type`.",
-        "status": "failure"
-    }
-
-**cURL Example:**
-
-::
-
-    curl  http://localhost:8080/metrics/sms/1/
+* HTTP ``400``: invalid route parameters, invalid JSON, or invalid FQ arguments.
+* HTTP ``404``: no job ready to dequeue or target queue/job was not found.
+* HTTP ``429``: enqueue rejected because ``payload.max_queued_length`` was reached.
+* HTTP ``500``: backend health check failed during ``/deepstatus/``.
