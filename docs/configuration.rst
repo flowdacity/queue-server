@@ -20,6 +20,10 @@ Queue settings
 ``FQ_ENABLE_REQUEUE_SCRIPT``
     Enables or disables the background requeue loop.
 
+``FQ_LOG_LEVEL``
+    Application log level. Supported values are ``DEBUG``, ``INFO``, ``WARNING``,
+    ``ERROR``, and ``CRITICAL``.
+
 Redis settings
 --------------
 
@@ -63,6 +67,8 @@ Defaults
      - ``-1``
    * - ``FQ_ENABLE_REQUEUE_SCRIPT``
      - ``true``
+   * - ``FQ_LOG_LEVEL``
+     - ``INFO``
    * - ``FQ_REDIS_DB``
      - ``0``
    * - ``FQ_REDIS_KEY_PREFIX``

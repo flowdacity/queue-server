@@ -39,6 +39,7 @@ Values are validated at startup with `pydantic-settings`.
 | `FQ_JOB_REQUEUE_INTERVAL` | `1000` | Milliseconds between expired-job requeue passes. |
 | `FQ_DEFAULT_JOB_REQUEUE_LIMIT` | `-1` | Default retry limit. `-1` retries forever. |
 | `FQ_ENABLE_REQUEUE_SCRIPT` | `true` | Enables the background requeue loop. |
+| `FQ_LOG_LEVEL` | `INFO` | Application log level. |
 | `FQ_REDIS_DB` | `0` | Redis database number. |
 | `FQ_REDIS_KEY_PREFIX` | `fq_server` | Prefix used for Redis keys. |
 | `FQ_REDIS_CONN_TYPE` | `tcp_sock` | Redis connection type: `tcp_sock` or `unix_sock`. |

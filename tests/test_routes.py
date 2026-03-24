@@ -6,10 +6,11 @@ import unittest
 
 import ujson as json
 from httpx import AsyncClient, ASGITransport
+from pydantic import ValidationError
 from starlette.types import ASGIApp
 from unittest.mock import AsyncMock, patch
 
-from fq_server import FQConfig, build_config_from_env, setup_server
+from fq_server import FQConfig, QueueServerSettings, build_config_from_env, setup_server
 
 
 def build_test_config() -> FQConfig:
@@ -87,6 +88,14 @@ class FQConfigTestCase(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "FQ_REDIS_CLUSTERED"):
             build_config_from_env({"FQ_REDIS_CLUSTERED": "1"})
+
+    def test_queue_server_settings_log_level_override(self):
+        settings = QueueServerSettings.from_env({"FQ_LOG_LEVEL": "debug"})
+        self.assertEqual(settings.log_level, "DEBUG")
+
+    def test_queue_server_settings_rejects_invalid_log_level(self):
+        with self.assertRaisesRegex(ValidationError, "FQ_LOG_LEVEL"):
+            QueueServerSettings.from_env({"FQ_LOG_LEVEL": "verbose"})
 
 
 class FQServerTestCase(unittest.IsolatedAsyncioTestCase):

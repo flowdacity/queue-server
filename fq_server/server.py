@@ -3,7 +3,7 @@
 # Copyright (c) 2025 Flowdacity Development Team. See LICENSE.txt for details.
 
 import asyncio
-import traceback
+import logging
 import ujson as json
 from collections.abc import Mapping
 from contextlib import asynccontextmanager, suppress
@@ -20,6 +20,7 @@ from starlette.routing import Route
 from fq_server.settings import FQConfig, QueueServerSettings
 
 JSONDict: TypeAlias = dict[str, Any]
+logger = logging.getLogger(__name__)
 
 
 def build_config_from_env(
@@ -59,19 +60,22 @@ class FQServer(object):
             try:
                 await self.queue.requeue()
             except Exception:
-                traceback.print_exc()
+                logger.exception("Failed to requeue expired jobs")
             # in seconds
             await asyncio.sleep(job_requeue_interval / 1000.0)
 
     async def requeue_with_lock(self):
         """Loop endlessly and requeue expired jobs, but with a distributed lock."""
         if not self.config["fq"]["enable_requeue_script"]:
-            print("requeue script disabled")
+            logger.info("Requeue loop disabled")
             return
 
         job_requeue_interval = float(self.config["fq"]["job_requeue_interval"])
 
-        print("start requeue loop: job_requeue_interval = %f" % (job_requeue_interval))
+        logger.info(
+            "Starting requeue loop",
+            extra={"job_requeue_interval": job_requeue_interval},
+        )
 
         while True:
             try:
@@ -82,10 +86,10 @@ class FQServer(object):
                     try:
                         await self.queue.requeue()
                     except Exception:
-                        traceback.print_exc()
+                        logger.exception("Failed to requeue expired jobs while holding lock")
             except LockError:
                 # the lock wasn't acquired within specified time
-                pass
+                logger.debug("Requeue lock is already held by another worker")
             finally:
                 await asyncio.sleep(job_requeue_interval / 1000.0)
 
@@ -217,10 +221,10 @@ class FQServer(object):
                     queue_type, queue_id
                 )
             except Exception as e:
-                print(
-                    "Error occurred while fetching redis key length as {} for auth_id {}".format(
-                        e, queue_id
-                    )
+                logger.warning(
+                    "Failed to fetch queue length during enqueue",
+                    exc_info=e,
+                    extra={"queue_type": queue_type, "queue_id": queue_id},
                 )
 
             if current_queue_length < max_queued_length:
@@ -228,7 +232,10 @@ class FQServer(object):
                     response = await self.queue.enqueue(**request_data)
                     response["current_queue_length"] = current_queue_length
                 except Exception as e:
-                    traceback.print_exc()
+                    logger.exception(
+                        "Enqueue failed",
+                        extra={"queue_type": queue_type, "queue_id": queue_id},
+                    )
                     response["message"] = str(e)
                     return JSONResponse(response, status_code=400)
 
@@ -241,7 +248,10 @@ class FQServer(object):
             try:
                 response = await self.queue.enqueue(**request_data)
             except Exception as e:
-                traceback.print_exc()
+                logger.exception(
+                    "Enqueue failed",
+                    extra={"queue_type": queue_type, "queue_id": queue_id},
+                )
                 response["message"] = str(e)
                 return JSONResponse(response, status_code=400)
 
@@ -271,15 +281,14 @@ class FQServer(object):
                     queue_type, response["queue_id"]
                 )
             except Exception as e:
-                print(
-                    "DEQUEUE::Error occurred while fetching redis key length {} for queue_id {}".format(
-                        e, response["queue_id"]
-                    )
+                logger.warning(
+                    "Failed to fetch queue length during dequeue",
+                    exc_info=e,
+                    extra={"queue_type": queue_type, "queue_id": response["queue_id"]},
                 )
             response["current_queue_length"] = current_queue_length
         except Exception as e:
-            for line in traceback.format_exc().splitlines():
-                print(line)
+            logger.exception("Dequeue failed", extra={"queue_type": queue_type})
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
 
@@ -303,7 +312,10 @@ class FQServer(object):
             if response["status"] == "failure":
                 return JSONResponse(response, status_code=404)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(
+                "Finish failed",
+                extra={"queue_type": queue_type, "queue_id": queue_id, "job_id": job_id},
+            )
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
 
@@ -334,7 +346,10 @@ class FQServer(object):
             if response["status"] == "failure":
                 return JSONResponse(response, status_code=404)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(
+                "Interval update failed",
+                extra={"queue_type": queue_type, "queue_id": queue_id},
+            )
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
 
@@ -357,7 +372,7 @@ class FQServer(object):
         try:
             response = await self.queue.metrics(**request_data)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception("Metrics query failed", extra=request_data)
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
 
@@ -370,9 +385,7 @@ class FQServer(object):
             response: JSONDict = {"status": "success"}
             return JSONResponse(response)
         except Exception as e:
-            print(e)
-            for line in traceback.format_exc().splitlines():
-                print(line)
+            logger.exception("Deep status check failed")
             # preserve original behavior: raise generic exception -> 500
             raise Exception from e
 
@@ -399,7 +412,10 @@ class FQServer(object):
         try:
             response = await self.queue.clear_queue(**request_data)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(
+                "Clear queue failed",
+                extra={"queue_type": queue_type, "queue_id": queue_id},
+            )
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
 

@@ -1,10 +1,12 @@
 # Copyright (c) 2025 Flowdacity Development Team. See LICENSE.txt for details.
 
 from collections.abc import Mapping
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, cast
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+LogLevelName = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 class FQSectionConfig(TypedDict):
@@ -47,6 +49,7 @@ class QueueServerSettings(BaseSettings):
     enable_requeue_script: bool = Field(
         default=True, validation_alias="FQ_ENABLE_REQUEUE_SCRIPT"
     )
+    log_level: LogLevelName = Field(default="INFO", validation_alias="FQ_LOG_LEVEL")
 
     redis_db: int = Field(default=0, ge=0, validation_alias="FQ_REDIS_DB")
     redis_key_prefix: str = Field(
@@ -85,6 +88,18 @@ class QueueServerSettings(BaseSettings):
                 return False
 
         raise ValueError("Use either 'true' or 'false'.")
+
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def validate_log_level(cls, value: LogLevelName | str) -> LogLevelName:
+        if isinstance(value, str):
+            normalized = value.strip().upper()
+            if normalized in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+                return cast(LogLevelName, normalized)
+
+        raise ValueError(
+            "Use one of: DEBUG, INFO, WARNING, ERROR, CRITICAL."
+        )
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "QueueServerSettings":
