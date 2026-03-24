@@ -612,6 +612,18 @@ class FQServerTestCase(unittest.IsolatedAsyncioTestCase):
             except asyncio.CancelledError:
                 pass  # Expected - task was cancelled after executing exception code path
 
+    async def test_requeue_with_lock_missing_redis_client(self):
+        """Test requeue_with_lock exits cleanly when the Redis client is unavailable."""
+        server = self.server
+        server.config["fq"]["job_requeue_interval"] = 1
+
+        with patch.object(server.queue, "redis_client", return_value=None):
+            requeue_task = asyncio.create_task(server.requeue_with_lock())
+            await asyncio.sleep(0.05)
+
+            self.assertTrue(requeue_task.done())
+            self.assertIsNone(requeue_task.exception())
+
 
 class FQServerLifespanTestCase(unittest.IsolatedAsyncioTestCase):
     """Test FQServer lifespan (startup/shutdown)."""

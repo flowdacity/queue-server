@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from pathlib import Path
+import tomllib
+
 import alabaster
 
 extensions = [
@@ -15,8 +18,11 @@ master_doc = "index"
 
 project = "Flowdacity Queue Server"
 copyright = "2025, Flowdacity Development Team"
-version = "0.1.0"
-release = "0.1.0"
+project_root = Path(__file__).resolve().parents[1]
+release = tomllib.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))[
+    "project"
+]["version"]
+version = release
 
 exclude_patterns = ["_build"]
 pygments_style = "sphinx"
