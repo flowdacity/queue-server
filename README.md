@@ -29,7 +29,7 @@ pip install pytest pytest-cov
 ## Configuration
 
 The server reads all queue and Redis settings from environment variables. No config file is required.
-Values are validated at startup with `pydantic-settings`.
+These application settings are validated at startup by `QueueServerSettings` with `pydantic-settings`.
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -46,9 +46,10 @@ Values are validated at startup with `pydantic-settings`.
 | `REDIS_PASSWORD` | empty | Redis password. |
 | `REDIS_CLUSTERED` | `false` | Enables Redis Cluster mode. |
 | `REDIS_UNIX_SOCKET_PATH` | `/tmp/redis.sock` | Redis socket path when `REDIS_CONN_TYPE=unix_sock`. |
-| `PORT` | `8300` | Uvicorn port used by the container and local examples. |
 
 Boolean env vars accept only `true` or `false`.
+
+`PORT` is not part of `QueueServerSettings`. It is runtime launcher configuration used by the container entrypoint or by the `uvicorn` CLI, so pass it as a launcher environment variable or `--port` argument.
 
 ## Run locally
 
@@ -61,9 +62,9 @@ make redis-up
 Run the API:
 
 ```bash
-PORT=8300 \
-REDIS_HOST=127.0.0.1 \
-uv run uvicorn asgi:app --host 0.0.0.0 --port 8300
+export PORT=8300
+export REDIS_HOST=127.0.0.1
+uv run uvicorn asgi:app --host 0.0.0.0 --port "${PORT}"
 ```
 
 ## Docker
