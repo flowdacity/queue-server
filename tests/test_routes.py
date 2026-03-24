@@ -1,62 +1,95 @@
-# tests/test_routes.py
-
 # -*- coding: utf-8 -*-
 # Copyright (c) 2025 Flowdacity Development Team. See LICENSE.txt for details.
 
-import os
-import unittest
 import asyncio
+import unittest
+
 import ujson as json
-from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient, ASGITransport
 from starlette.types import ASGIApp
-from fq_server import setup_server
-from fq_server.server import FQServer
+from unittest.mock import AsyncMock, patch
+
+from fq_server import build_config_from_env, setup_server
+
+
+def build_test_config():
+    return {
+        "fq": {
+            "job_expire_interval": 1000,
+            "job_requeue_interval": 1000,
+            "default_job_requeue_limit": -1,
+            "enable_requeue_script": True,
+        },
+        "redis": {
+            "db": 0,
+            "key_prefix": "fq_server_test",
+            "conn_type": "tcp_sock",
+            "host": "127.0.0.1",
+            "port": 6379,
+            "password": "",
+            "clustered": False,
+            "unix_socket_path": "/tmp/redis.sock",
+        },
+    }
 
 
 class FQConfigTestCase(unittest.TestCase):
     """Tests for configuration validation."""
 
-    def test_missing_fq_config_env_var(self):
-        """Test that missing FQ_CONFIG environment variable uses default config."""
-        # Ensure FQ_CONFIG is not set
-        env_backup = os.environ.pop("FQ_CONFIG", None)
-        try:
-            # Capture stdout to verify warning message
-            from io import StringIO
-            import sys
-            captured_output = StringIO()
-            sys.stdout = captured_output
-            
-            # Re-import asgi module to trigger the check
-            import importlib
-            import asgi
-            importlib.reload(asgi)
-            
-            sys.stdout = sys.__stdout__
-            
-            # Verify warning was printed
-            output = captured_output.getvalue()
-            self.assertIn("FQ_CONFIG", output)
-            self.assertIn("default config path", output)
-        finally:
-            # Restore the environment variable if it was set
-            if env_backup is not None:
-                os.environ["FQ_CONFIG"] = env_backup
-            sys.stdout = sys.__stdout__
+    def test_build_config_from_env_defaults(self):
+        config = build_config_from_env({})
+        self.assertEqual(config["fq"]["job_expire_interval"], 1000)
+        self.assertEqual(config["fq"]["job_requeue_interval"], 1000)
+        self.assertEqual(config["fq"]["default_job_requeue_limit"], -1)
+        self.assertTrue(config["fq"]["enable_requeue_script"])
+        self.assertEqual(config["redis"]["host"], "127.0.0.1")
+        self.assertEqual(config["redis"]["port"], 6379)
+        self.assertEqual(config["redis"]["key_prefix"], "fq_server")
 
-    def test_config_file_not_found(self):
-        """Test that non-existent config file raises FileNotFoundError."""
-        with self.assertRaises(FileNotFoundError) as context:
-            FQServer("/nonexistent/path/to/config.conf")
-        self.assertIn("Config file not found", str(context.exception))
+    def test_build_config_from_env_overrides(self):
+        config = build_config_from_env(
+            {
+                "FQ_JOB_EXPIRE_INTERVAL": "5000",
+                "FQ_JOB_REQUEUE_INTERVAL": "6000",
+                "FQ_DEFAULT_JOB_REQUEUE_LIMIT": "5",
+                "FQ_ENABLE_REQUEUE_SCRIPT": "false",
+                "FQ_REDIS_DB": "2",
+                "FQ_REDIS_KEY_PREFIX": "custom_prefix",
+                "FQ_REDIS_CONN_TYPE": "unix_sock",
+                "FQ_REDIS_HOST": "redis.internal",
+                "FQ_REDIS_PORT": "6380",
+                "FQ_REDIS_PASSWORD": "secret",
+                "FQ_REDIS_CLUSTERED": "true",
+                "FQ_REDIS_UNIX_SOCKET_PATH": "/var/run/redis.sock",
+            }
+        )
+        self.assertEqual(config["fq"]["job_expire_interval"], 5000)
+        self.assertEqual(config["fq"]["job_requeue_interval"], 6000)
+        self.assertEqual(config["fq"]["default_job_requeue_limit"], 5)
+        self.assertFalse(config["fq"]["enable_requeue_script"])
+        self.assertEqual(config["redis"]["db"], 2)
+        self.assertEqual(config["redis"]["key_prefix"], "custom_prefix")
+        self.assertEqual(config["redis"]["conn_type"], "unix_sock")
+        self.assertEqual(config["redis"]["host"], "redis.internal")
+        self.assertEqual(config["redis"]["port"], 6380)
+        self.assertEqual(config["redis"]["password"], "secret")
+        self.assertTrue(config["redis"]["clustered"])
+        self.assertEqual(
+            config["redis"]["unix_socket_path"], "/var/run/redis.sock"
+        )
+
+    def test_build_config_from_env_rejects_invalid_values(self):
+        with self.assertRaisesRegex(ValueError, "FQ_REDIS_PORT"):
+            build_config_from_env({"FQ_REDIS_PORT": "redis"})
+
+        with self.assertRaisesRegex(ValueError, "FQ_ENABLE_REQUEUE_SCRIPT"):
+            build_config_from_env({"FQ_ENABLE_REQUEUE_SCRIPT": "maybe"})
 
 
 class FQServerTestCase(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         # build server and Starlette app
-        config_path = os.path.join(os.path.dirname(__file__), "test.conf")
-        server = setup_server(config_path)
+        server = setup_server(build_test_config())
         self.server = server
         self.app: ASGIApp = server.app
 
@@ -76,6 +109,7 @@ class FQServerTestCase(unittest.IsolatedAsyncioTestCase):
         # flush redis after each test
         await self.r.flushdb()
         await self.client.aclose()
+        await self.queue.close()
 
     async def test_root(self):
         response = await self.client.get("/")
@@ -498,16 +532,16 @@ class FQServerTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_requeue_with_lock_disabled(self):
         """Test requeue_with_lock when requeue is disabled."""
         server = self.server
-        
-        # Mock config to disable requeue
-        with patch.object(server.config, "get", return_value="false"):
-            requeue_task = asyncio.create_task(server.requeue_with_lock())
-            
-            # Should return immediately (task completes)
-            await asyncio.sleep(0.1)
-            
-            # Task should be done (returned, not cancelled)
-            self.assertTrue(requeue_task.done())
+
+        server.config["fq"]["enable_requeue_script"] = False
+        requeue_task = asyncio.create_task(server.requeue_with_lock())
+
+        # Should return immediately (task completes)
+        await asyncio.sleep(0.1)
+
+        # Task should be done (returned, not cancelled)
+        self.assertTrue(requeue_task.done())
+        server.config["fq"]["enable_requeue_script"] = True
 
     async def test_requeue_with_lock_lock_error(self):
         """Test requeue_with_lock when lock acquisition fails with LockError."""
@@ -572,8 +606,7 @@ class FQServerLifespanTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_lifespan_startup_shutdown(self):
         """Test lifespan startup and graceful shutdown."""
-        config_path = os.path.join(os.path.dirname(__file__), "test.conf")
-        server = setup_server(config_path)
+        server = setup_server(build_test_config())
         
         # Simulate startup
         app = server.app
@@ -599,18 +632,22 @@ class FQServerLifespanTestCase(unittest.IsolatedAsyncioTestCase):
 
     async def test_lifespan_initializes_queue(self):
         """Test that lifespan calls queue.initialize()."""
-        config_path = os.path.join(os.path.dirname(__file__), "test.conf")
-        server = setup_server(config_path)
-        
+        server = setup_server(build_test_config())
+
         # Stub out both queue.initialize and the background requeue task to make
         # startup/shutdown deterministic and avoid hitting an uninitialized queue.
-        with patch.object(server.queue, "initialize", new_callable=AsyncMock) as mock_init, \
-             patch.object(server, "requeue_with_lock", new_callable=AsyncMock):
+        with patch.object(
+            server.queue, "initialize", new_callable=AsyncMock
+        ) as mock_init, patch.object(
+            server.queue, "close", new_callable=AsyncMock
+        ) as mock_close, patch.object(
+            server, "requeue_with_lock", new_callable=AsyncMock
+        ):
             lifespan_cm = server._lifespan(server.app)
             await lifespan_cm.__aenter__()
-            
+
             mock_init.assert_called_once()
-            
+
             # Cleanup
             if server._requeue_task is not None and not server._requeue_task.done():
                 server._requeue_task.cancel()
@@ -619,6 +656,7 @@ class FQServerLifespanTestCase(unittest.IsolatedAsyncioTestCase):
             except asyncio.CancelledError:
                 # Expected if the requeue task is cancelled during shutdown
                 pass
+            mock_close.assert_called_once()
 
 
 

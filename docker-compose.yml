@@ -2,12 +2,20 @@ services:
   app:
     build: .
     environment:
-      - FQ_CONFIG=/app/default.conf
-      - PORT=8080
+      PORT: 8080
+      FQ_JOB_EXPIRE_INTERVAL: 1000
+      FQ_JOB_REQUEUE_INTERVAL: 1000
+      FQ_DEFAULT_JOB_REQUEUE_LIMIT: -1
+      FQ_ENABLE_REQUEUE_SCRIPT: "true"
+      FQ_REDIS_DB: 0
+      FQ_REDIS_KEY_PREFIX: fq_server
+      FQ_REDIS_CONN_TYPE: tcp_sock
+      FQ_REDIS_HOST: redis
+      FQ_REDIS_PORT: 6379
+      FQ_REDIS_PASSWORD: ""
+      FQ_REDIS_CLUSTERED: "false"
     ports:
       - "8080:8080"
-    volumes:
-      - ./default.conf:/app/default.conf:ro
     depends_on:
       redis:
         condition: service_healthy

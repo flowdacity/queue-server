@@ -3,12 +3,13 @@
 # Copyright (c) 2025 Flowdacity Development Team. See LICENSE.txt for details.
 
 import asyncio
-import configparser
+import os
 import traceback
 import ujson as json
-from redis.exceptions import LockError
+from collections.abc import Mapping
 from contextlib import asynccontextmanager, suppress
 from fq import FQ
+from redis.exceptions import LockError
 
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -16,20 +17,130 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 
+DEFAULT_FQ_ENV_CONFIG = {
+    "fq": {
+        "job_expire_interval": 1000,
+        "job_requeue_interval": 1000,
+        "default_job_requeue_limit": -1,
+        "enable_requeue_script": True,
+    },
+    "redis": {
+        "db": 0,
+        "key_prefix": "fq_server",
+        "conn_type": "tcp_sock",
+        "host": "127.0.0.1",
+        "port": 6379,
+        "password": "",
+        "clustered": False,
+        "unix_socket_path": "/tmp/redis.sock",
+    },
+}
+
+
+def _coerce_bool(value: str, env_var: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(
+        f"Invalid boolean value for {env_var}: {value!r}. "
+        "Use one of: 1, 0, true, false, yes, no, on, off."
+    )
+
+
+def _get_env_int(
+    env: Mapping[str, str], env_var: str, default: int, *, allow_empty: bool = True
+) -> int:
+    value = env.get(env_var)
+    if value is None or (allow_empty and value == ""):
+        return default
+
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid integer value for {env_var}: {value!r}."
+        ) from exc
+
+
+def _get_env_bool(env: Mapping[str, str], env_var: str, default: bool) -> bool:
+    value = env.get(env_var)
+    if value is None or value == "":
+        return default
+    return _coerce_bool(value, env_var)
+
+
+def _copy_config(config: Mapping[str, Mapping[str, object]]) -> dict[str, dict[str, object]]:
+    normalized = {}
+    for section_name, section_values in config.items():
+        if not isinstance(section_values, Mapping):
+            raise TypeError(f"Config section {section_name!r} must be a mapping.")
+        normalized[str(section_name)] = {
+            str(option): value for option, value in section_values.items()
+        }
+    return normalized
+
+
+def build_config_from_env(
+    env: Mapping[str, str] | None = None,
+) -> dict[str, dict[str, object]]:
+    """Build the FQ/FQ server configuration from environment variables."""
+    env_map = os.environ if env is None else env
+
+    config = _copy_config(DEFAULT_FQ_ENV_CONFIG)
+    config["fq"]["job_expire_interval"] = _get_env_int(
+        env_map, "FQ_JOB_EXPIRE_INTERVAL", config["fq"]["job_expire_interval"]
+    )
+    config["fq"]["job_requeue_interval"] = _get_env_int(
+        env_map, "FQ_JOB_REQUEUE_INTERVAL", config["fq"]["job_requeue_interval"]
+    )
+    config["fq"]["default_job_requeue_limit"] = _get_env_int(
+        env_map,
+        "FQ_DEFAULT_JOB_REQUEUE_LIMIT",
+        config["fq"]["default_job_requeue_limit"],
+    )
+    config["fq"]["enable_requeue_script"] = _get_env_bool(
+        env_map,
+        "FQ_ENABLE_REQUEUE_SCRIPT",
+        config["fq"]["enable_requeue_script"],
+    )
+
+    config["redis"]["db"] = _get_env_int(
+        env_map, "FQ_REDIS_DB", config["redis"]["db"]
+    )
+    config["redis"]["key_prefix"] = env_map.get(
+        "FQ_REDIS_KEY_PREFIX", config["redis"]["key_prefix"]
+    )
+    config["redis"]["conn_type"] = env_map.get(
+        "FQ_REDIS_CONN_TYPE", config["redis"]["conn_type"]
+    )
+    config["redis"]["host"] = env_map.get("FQ_REDIS_HOST", config["redis"]["host"])
+    config["redis"]["port"] = _get_env_int(
+        env_map, "FQ_REDIS_PORT", config["redis"]["port"]
+    )
+    config["redis"]["password"] = env_map.get(
+        "FQ_REDIS_PASSWORD", config["redis"]["password"]
+    )
+    config["redis"]["clustered"] = _get_env_bool(
+        env_map, "FQ_REDIS_CLUSTERED", config["redis"]["clustered"]
+    )
+    config["redis"]["unix_socket_path"] = env_map.get(
+        "FQ_REDIS_UNIX_SOCKET_PATH", config["redis"]["unix_socket_path"]
+    )
+    return config
+
+
 class FQServer(object):
     """Defines a HTTP based API on top of FQ and
     exposes the app to run the server (Starlette).
     """
 
-    def __init__(self, config_path: str):
-        """Load the FQ config and define the routes."""
-        # read the configs required by fq-server.
-        self.config = configparser.ConfigParser()
-        files_read = self.config.read(config_path)
-        if not files_read:
-            raise FileNotFoundError(f"Config file not found: {config_path}")
-        # pass the config file to configure the FQ core.
-        self.queue = FQ(config_path)
+    def __init__(self, config: Mapping[str, Mapping[str, object]]):
+        """Load the FQ config mapping and define the routes."""
+        self.config = _copy_config(config)
+        self.queue = FQ(self.config)
+        self._requeue_task: asyncio.Task | None = None
 
         # Starlette app with routes and startup hook
         self.app = Starlette(
@@ -42,7 +153,7 @@ class FQServer(object):
     # ------------------------------------------------------------------
     async def requeue(self):
         """Loop endlessly and requeue expired jobs (no lock)."""
-        job_requeue_interval = float(self.config.get("fq", "job_requeue_interval"))
+        job_requeue_interval = float(self.config["fq"]["job_requeue_interval"])
         while True:
             try:
                 await self.queue.requeue()
@@ -53,12 +164,11 @@ class FQServer(object):
 
     async def requeue_with_lock(self):
         """Loop endlessly and requeue expired jobs, but with a distributed lock."""
-        enable_requeue_script = self.config.get("fq", "enable_requeue_script")
-        if enable_requeue_script == "false":
+        if not self.config["fq"].get("enable_requeue_script", True):
             print("requeue script disabled")
             return
 
-        job_requeue_interval = float(self.config.get("fq", "job_requeue_interval"))
+        job_requeue_interval = float(self.config["fq"]["job_requeue_interval"])
 
         print("start requeue loop: job_requeue_interval = %f" % (job_requeue_interval))
 
@@ -95,6 +205,7 @@ class FQServer(object):
                 self._requeue_task.cancel()
                 with suppress(asyncio.CancelledError):
                     await self._requeue_task
+            await self.queue.close()
 
     # ------------------------------------------------------------------
     # Routes definition
@@ -396,7 +507,11 @@ class FQServer(object):
 # ----------------------------------------------------------------------
 # Setup helpers to create and configure the server
 # ----------------------------------------------------------------------
-def setup_server(config_path: str) -> FQServer:
+def setup_server(
+    config: Mapping[str, Mapping[str, object]] | None = None,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> FQServer:
     """Configure FQ server and return the server instance."""
-    server = FQServer(config_path)
-    return server
+    server_config = build_config_from_env(env) if config is None else _copy_config(config)
+    return FQServer(server_config)

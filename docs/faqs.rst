@@ -55,13 +55,13 @@ A simple SHARQ worker polls for the jobs in a loop. The `Python snippet <https:/
 How do I configure the time of expiry of a job?
 ===============================================
 
-Any job which is dequeued by the worker has to be acknowledged with a finish request within a specific time period, to mark that job as successfully processed. The job which does not get a finish request within this period will be marked as *expired* by the SHARQ Server. This time period has to be specified by the ``job_expire_interval`` parameter in the SHARQ configuration file.
+Any job which is dequeued by the worker has to be acknowledged with a finish request within a specific time period, to mark that job as successfully processed. The job which does not get a finish request within this period will be marked as *expired* by the SHARQ Server. This time period is controlled by the ``FQ_JOB_EXPIRE_INTERVAL`` environment variable.
 
 
 How do I configure when the expired jobs should be re-queued?
 =============================================================
 
-All expired jobs in the SHARQ Server will be re-queued back into their respective queues during the *clean up* process. The time interval between two clean ups can be specified by the ``job_requeue_interval`` parameter in the SHARQ configuration file.
+All expired jobs in the SHARQ Server will be re-queued back into their respective queues during the *clean up* process. The time interval between two clean ups is controlled by the ``FQ_JOB_REQUEUE_INTERVAL`` environment variable.
 
 Is there a way to run the SHARQ Server using uWSGI?
 ===================================================

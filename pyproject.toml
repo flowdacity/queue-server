@@ -5,7 +5,7 @@ description = "An API queuing server based on the Flowdacity Queue (FQ) library.
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "flowdacity-queue>=0.1.0",
+    "flowdacity-queue @ git+https://github.com/flowdacity/flowdacity-queue.git@v1.0.0",
     "httpx>=0.28.1",
     "msgpack>=1.1.2",
     "redis[hiredis]>=7.1.0",
@@ -33,7 +33,6 @@ include = [
   "fq_server",
   "README.md",
   "LICENSE.txt",
-  "default.conf",
   "asgi.py",
   "docs",
   "Makefile",
