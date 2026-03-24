@@ -2,120 +2,91 @@
 Configuration
 =============
 
-The SHARQ configuration file is minimal and has three sections.
+Flowdacity Queue Server reads its runtime configuration from environment variables.
+Settings are validated at startup with ``pydantic-settings``.
 
-* `Sharq Section <#id1>`_
-* `Sharq Server Section <#id2>`_
-* `Redis Section <#id3>`_
+Queue settings
+--------------
 
+``JOB_EXPIRE_INTERVAL``
+    Milliseconds after which a dequeued job is considered expired.
 
-fq section
-~~~~~~~~~~~~~
+``JOB_REQUEUE_INTERVAL``
+    Milliseconds between requeue passes for expired jobs.
 
-This section contains the configurations specific to the SHARQ core.
+``DEFAULT_JOB_REQUEUE_LIMIT``
+    Default retry limit for jobs. ``-1`` means retry forever.
 
-job\_expire\_interval
-^^^^^^^^^^^^^^^^^^^^^
+``ENABLE_REQUEUE_SCRIPT``
+    Enables or disables the background requeue loop.
 
-``job_expire_interval`` is the number of milliseconds after which any job
-not marked as finished will expire. All expired jobs are scheduled for re-queueing.
+``LOG_LEVEL``
+    Application log level. Supported values are ``DEBUG``, ``INFO``, ``WARNING``,
+    ``ERROR``, and ``CRITICAL``.
 
-job\_requeue\_interval
-^^^^^^^^^^^^^^^^^^^^^^
+Redis settings
+--------------
 
-``job_requeue_interval`` is the number of milliseconds to wait between
-two clean up processes. A clean up re-queues all the expired jobs back into their
-respective queues.
+``REDIS_DB``
+    Redis database number.
 
-fq-server section
-~~~~~~~~~~~~~~~~~~~~
+``REDIS_KEY_PREFIX``
+    Prefix used for Redis keys created by the queue.
 
-This section contains the configurations specific to the SHARQ Server.
+``REDIS_CONN_TYPE``
+    Redis connection type. Supported values are ``tcp_sock`` and ``unix_sock``.
 
-host
-^^^^
+``REDIS_HOST``
+    Redis host for TCP connections.
 
-``host`` is IP address to which the SHARQ Server should bind to.
+``REDIS_PORT``
+    Redis port for TCP connections.
 
-port
-^^^^
+``REDIS_PASSWORD``
+    Redis password. Leave empty when authentication is not required.
 
-``port`` is where the SHARQ Server should listen for requests.
+``REDIS_CLUSTERED``
+    Enables Redis Cluster mode when set to ``true``.
 
-workers
-^^^^^^^
+``REDIS_UNIX_SOCKET_PATH``
+    Redis unix socket path when ``REDIS_CONN_TYPE=unix_sock``.
 
-SHARQ Server internally uses `Gunicorn <http://gunicorn.org/>`_ as the server. The ``workers`` parameter specifies the number of Gunicorn workers to spawn when the server starts. More details on this can be found in the `Gunicorn docs <http://docs.gunicorn.org/en/latest/settings.html#workers>`_.
+Defaults
+--------
 
-accesslog
-^^^^^^^^^
+.. list-table::
+   :header-rows: 1
 
-Location for the SHARQ Server to write its access logs.
+   * - Variable
+     - Default
+   * - ``JOB_EXPIRE_INTERVAL``
+     - ``1000``
+   * - ``JOB_REQUEUE_INTERVAL``
+     - ``1000``
+   * - ``DEFAULT_JOB_REQUEUE_LIMIT``
+     - ``-1``
+   * - ``ENABLE_REQUEUE_SCRIPT``
+     - ``true``
+   * - ``LOG_LEVEL``
+     - ``INFO``
+   * - ``REDIS_DB``
+     - ``0``
+   * - ``REDIS_KEY_PREFIX``
+     - ``fq_server``
+   * - ``REDIS_CONN_TYPE``
+     - ``tcp_sock``
+   * - ``REDIS_HOST``
+     - ``127.0.0.1``
+   * - ``REDIS_PORT``
+     - ``6379``
+   * - ``REDIS_PASSWORD``
+     - empty
+   * - ``REDIS_CLUSTERED``
+     - ``false``
+   * - ``REDIS_UNIX_SOCKET_PATH``
+     - ``/tmp/redis.sock``
 
-redis section
-~~~~~~~~~~~~~
+Boolean values
+--------------
 
-This section contains the configurations specific to Redis.
-
-db
-^^
-
-The Redis database number to which the SHARQ Server should connect.
-
-key\_prefix
-^^^^^^^^^^^
-
-Every key used by the SHARQ Server in Redis will start with this prefix.
-
-conn\_type
-^^^^^^^^^^
-
-Specifies how the SHARQ Server should connect to Redis. If Redis is in
-the same machine as the SHARQ Server, then connecting via unix socket (*unix_sock*)
-is recommended.
-
-If Redis is on a remote machine, set ``conn\_type`` to *tcp_sock*.
-
-unix\_socket\_path
-^^^^^^^^^^^^^^^^^^
-
-Absolute path of the unix socket created by Redis. This has to be set in
-case the ``conn\_type`` is set to *unix_sock*.
-
-port
-^^^^
-
-Port where Redis listens for connections.
-
-host
-^^^^
-
-IP address or FQDN of Redis.
-
-
-A Sample Configuration File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A sample configuration file looks like this. You can also get this configuration file from the `Github repository <https://raw.githubusercontent.com/plivo/fq-server/master/fq.conf>`_.
-
-.. code-block:: ini
-
-    [fq]
-    job_expire_interval  : 1000 ; in milliseconds
-    job_requeue_interval : 1000 ; in milliseconds
-
-    [fq-server]
-    host                 : 127.0.0.1
-    port                 : 8080
-    workers              : 1 ; optional
-    accesslog            : /tmp/fq.log ; optional
-
-    [redis]
-    db                   : 0
-    key_prefix           : fq_server
-    conn_type            : tcp_sock ; or unix_sock
-    ;; unix connection settings
-    unix_socket_path     : /tmp/redis.sock
-    ;; tcp connection settings
-    port                 : 6379
-    host                 : 127.0.0.1
+Boolean environment variables accept only ``true`` and ``false``.

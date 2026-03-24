@@ -1,101 +1,98 @@
-===========================
-Frequently Asked  Questions
-===========================
+==========================
+Frequently Asked Questions
+==========================
 
-When should I use SHARQ?
-========================
+When should I use Flowdacity Queue Server?
+==========================================
 
-If you want the flexibility to dynamically create queues and update their rate limits in real time without making any configuration changes, then you need SHARQ.
+Use it when you want HTTP access to Flowdacity Queue from workers or services that
+should not link directly against the Python FQ library. It is especially useful when
+you need dynamic queues, per-queue rate limits, and Redis-backed retry/requeue behavior.
 
 How do I set a rate limit for a queue?
 ======================================
 
-The rate limit of a queue (which is the inverse of an interval), can be set while making an enqueue request. Each enqueue request requires the ``interval`` parameter which defines the rate limit of the queue. For example, if the queue has to be rate limited at 1 request per second, the ``interval`` has to be set to 1000 (in milliseconds). Refer to the `Getting Started <gettingstarted.html>`_ section to know more about how to set the interval while making an enqueue request.
+Set the ``interval`` field when enqueueing a job. The interval is in milliseconds and
+represents the minimum gap between successful dequeues for the queue.
 
-How do I change the rate limit of a queue?
-==========================================
+How do I change the rate limit of an existing queue?
+====================================================
 
-Once the rate limit has been set for a queue during the enqueue operation, it can be changed using the `Interval API <apireference.html#interval>`_.
+Call the `Interval API <apireference.html#interval>`_:
 
-How do I write a SHARQ worker for processing jobs from the SHARQ Server?
-========================================================================
+.. code-block:: bash
 
-A simple SHARQ worker polls for the jobs in a loop. The `Python snippet <https://gist.github.com/sandeepraju/3da0ad035aa9bf5504b1>`_ below shows how to structure a minimal worker:
+    curl -X POST http://127.0.0.1:8300/interval/sms/user42/ \
+      -H "Content-Type: application/json" \
+      -d '{"interval": 5000}'
+
+How do I write a worker that processes jobs from the server?
+============================================================
+
+Any HTTP client can be used. A minimal Python example with ``httpx`` looks like this:
 
 .. code-block:: python
 
     import time
-    import json
-    import requests
 
-    while True:
-	# dequeue the job from the queue of type `sms`
-	try:
-	    response = requests.get('http://localhost:8080/dequeue/sms/')
-	    if response.status_code == 200:
-		# successful dequeue.
-		r = json.loads(response.text)
-		print r['payload']  # process the payload here.
-		queue_id = r['queue_id']
-		job_id = r['job_id']
-		# mark the job as completed successfully by
-		# sending a finish request.
-		requests.post(
-		    'http://localhost:8080/finish/sms/%s/%s/' % (
-		    queue_id, job_id))
-	    elif response.status_code == 404:
-		# no job found (either queue is empty or none
-		# of the jobs are ready yet).
-		time.sleep(1)  # wait for a second before retrying if needed.
-	except Exception as e:
-	    print "Something went wrong!"
-	    time.sleep(5)  # retry after 5 seconds.
+    import httpx
 
 
-How do I configure the time of expiry of a job?
-===============================================
+    with httpx.Client(base_url="http://127.0.0.1:8300") as client:
+        while True:
+            response = client.get("/dequeue/sms/")
 
-Any job which is dequeued by the worker has to be acknowledged with a finish request within a specific time period, to mark that job as successfully processed. The job which does not get a finish request within this period will be marked as *expired* by the SHARQ Server. This time period has to be specified by the ``job_expire_interval`` parameter in the SHARQ configuration file.
+            if response.status_code == 200:
+                job = response.json()
+                print(job["payload"])
+                client.post(
+                    f"/finish/sms/{job['queue_id']}/{job['job_id']}/"
+                )
+                continue
 
+            if response.status_code == 404:
+                time.sleep(1)
+                continue
 
-How do I configure when the expired jobs should be re-queued?
-=============================================================
+            raise RuntimeError(response.text)
 
-All expired jobs in the SHARQ Server will be re-queued back into their respective queues during the *clean up* process. The time interval between two clean ups can be specified by the ``job_requeue_interval`` parameter in the SHARQ configuration file.
+How do I configure job expiry and requeue timing?
+=================================================
 
-Is there a way to run the SHARQ Server using uWSGI?
-===================================================
+Use environment variables:
 
-Yes! By default the SHARQ Server uses `Gunicorn <http://gunicorn.org/>`_ internally. If you want to use `uWSGI <https://uwsgi-docs.readthedocs.org/en/latest/>`_ or any other server based on WSGI, you can do so by running ``wsgi.py`` provided in the source files `available on Github <https://github.com/plivo/fq-server/blob/master/wsgi.py>`_. For optimal performance, it is recommended to use  uWSGI with `Nginx <http://nginx.org/>`_. More details can be found in the `uWSGI documentation <http://uwsgi-docs.readthedocs.org/en/latest/Nginx.html>`_.
+* ``JOB_EXPIRE_INTERVAL`` controls how long a dequeued job can remain active
+  before it is considered expired.
+* ``JOB_REQUEUE_INTERVAL`` controls how often expired jobs are scanned and
+  placed back onto their queues.
 
-How do I know the number of jobs in any queue in real time?
-===========================================================
+How do I inspect queue depth and throughput?
+============================================
 
-The `Metrics API <apireference.html#metrics>`_ lets you query the SHARQ Server for details like number of jobs, per minute enqueue & dequeue rates, and so on. Read the `API Reference <apireference.html#metrics>`_ section for more details.
+Use the `Metrics API <apireference.html#metrics>`_. It provides:
 
-How do I get a list of all queues in the SHARQ Server?
-======================================================
+* Global queue types plus enqueue/dequeue counts.
+* Queue IDs for a specific queue type.
+* Queue length and per-minute counters for a specific queue.
 
-The `Metrics API <apireference.html#metrics>`_ lets you query the SHARQ Server for details like number of jobs, per minute enqueue & dequeue rates, and so on. Read the `API Reference <apireference.html#metrics>`_ section for more details.
+How do I clear a queue?
+=======================
 
-How do I check the status of a job in real time?
-================================================
+Call the ``DELETE /deletequeue/<queue_type>/<queue_id>/`` endpoint. If you want to
+remove related payload and interval metadata as well, send ``{"purge_all": true}``
+in the request body.
 
-This feature is not yet available in SHARQ but will be implemented in the future.
+Where is the source code?
+=========================
 
-Where can I find the source code of SHARQ?
+The codebase is split across two repositories:
+
+* Flowdacity Queue Server: https://github.com/flowdacity/queue-server
+* Flowdacity Queue core: https://github.com/flowdacity/queue-engine
+
+How do I report a bug or contribute a fix?
 ==========================================
 
-The SHARQ code base is split into two components - the core component and the server component. You can find it here:
-
-**Github Repository Links:**
-
-* The SHARQ Core - https://github.com/plivo/fq
-* The SHARQ Server - https://github.com/plivo/fq-server
-
-Read the `Contributing <contributing.html>`_ section for more details.
-
-I just found a bug. How do I report it?
-=======================================
-
-Read the `Contributing <contributing.html>`_ section for more details.
+Open an issue or pull request in the server repository and include reproduction
+steps, Redis details, and any failing requests or tests when possible. The
+`Contributing <contributing.html>`_ section covers the local development workflow.

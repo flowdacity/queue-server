@@ -1,27 +1,23 @@
-[![Run tests and upload coverage](https://github.com/flowdacity/flowdacity-queue-server/actions/workflows/test.yml/badge.svg)](https://github.com/flowdacity/flowdacity-queue-server/actions/workflows/test.yml)
-[![codecov](https://codecov.io/github/flowdacity/flowdacity-queue-server/graph/badge.svg?token=9AK3GR856C)](https://codecov.io/github/flowdacity/flowdacity-queue-server)
+[![Run tests and upload coverage](https://github.com/flowdacity/queue-server/actions/workflows/test.yml/badge.svg)](https://github.com/flowdacity/queue-server/actions/workflows/test.yml)
+[![codecov](https://codecov.io/github/flowdacity/queue-server/graph/badge.svg?token=9AK3GR856C)](https://codecov.io/github/flowdacity/queue-server)
 
 Flowdacity Queue Server
 =======================
 
-An async HTTP API for the [Flowdacity Queue (FQ)](https://github.com/flowdacity/flowdacity-queue) core, built with Starlette and Uvicorn. It keeps the original SHARQ behavior (leaky-bucket rate limiting and dynamic queues) while modernizing the stack.
+An async HTTP API for [Flowdacity Queue (FQ)](https://github.com/flowdacity/queue-engine), built with Starlette and Uvicorn.
 
 ## Prerequisites
 
 - Python 3.12+
-- Redis 7+ reachable from the server
-- A Flowdacity Queue config file (see `default.conf` for a starter)
+- Redis 7+
 
 ## Installation
 
-Clone the repo and install the package plus dev tools (uses [`uv`](https://github.com/astral-sh/uv) by default):
-
 ```bash
 uv sync --group dev
-# or: uv pip install --system .
 ```
 
-If you prefer pip/venv without `uv`:
+If you prefer a virtualenv without `uv`:
 
 ```bash
 python -m venv .venv
@@ -32,29 +28,48 @@ pip install pytest pytest-cov
 
 ## Configuration
 
-- Point the server at your FQ config via `FQ_CONFIG` (defaults to `./default.conf`).
-- `default.conf` defines three sections:
-  - `[fq]` queue behavior (intervals, requeue limits).
-  - `[fq-server]` host/port for the HTTP server (used by Docker/local defaults).
-  - `[redis]` connection details for your Redis instance.
-- Copy and tweak as needed:
+The server reads all queue and Redis settings from environment variables. No config file is required.
+These application settings are validated at startup by `QueueServerSettings` with `pydantic-settings`.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `JOB_EXPIRE_INTERVAL` | `1000` | Milliseconds before a dequeued job is considered expired. |
+| `JOB_REQUEUE_INTERVAL` | `1000` | Milliseconds between expired-job requeue passes. |
+| `DEFAULT_JOB_REQUEUE_LIMIT` | `-1` | Default retry limit. `-1` retries forever. |
+| `ENABLE_REQUEUE_SCRIPT` | `true` | Enables the background requeue loop. |
+| `LOG_LEVEL` | `INFO` | Application log level. |
+| `REDIS_DB` | `0` | Redis database number. |
+| `REDIS_KEY_PREFIX` | `fq_server` | Prefix used for Redis keys. |
+| `REDIS_CONN_TYPE` | `tcp_sock` | Redis connection type: `tcp_sock` or `unix_sock`. |
+| `REDIS_HOST` | `127.0.0.1` | Redis host for TCP connections. |
+| `REDIS_PORT` | `6379` | Redis port for TCP connections. |
+| `REDIS_PASSWORD` | empty | Redis password. |
+| `REDIS_CLUSTERED` | `false` | Enables Redis Cluster mode. |
+| `REDIS_UNIX_SOCKET_PATH` | `/tmp/redis.sock` | Redis socket path when `REDIS_CONN_TYPE=unix_sock`. |
+
+Boolean env vars accept only `true` or `false`.
+
+`PORT` is not part of `QueueServerSettings`. It is runtime launcher configuration used by the container entrypoint or by the `uvicorn` CLI, so pass it as a launcher environment variable or `--port` argument.
+
+## Run locally
+
+Start Redis:
 
 ```bash
-cp default.conf local.conf
-# edit local.conf to match your Redis host/port/password
+make redis-up
 ```
 
-## Run the server locally
+Run the API:
 
 ```bash
-# ensure Redis is running (make redis starts a container)
-make redis
-
-# start the ASGI server
-FQ_CONFIG=./local.conf uv run uvicorn asgi:app --host 0.0.0.0 --port 8080
+export PORT=8300
+export REDIS_HOST=127.0.0.1
+uv run uvicorn asgi:app --host 0.0.0.0 --port "${PORT}"
 ```
 
-Docker Compose is also available:
+## Docker
+
+`docker-compose.yml` now passes the queue settings through env vars, so there is no mounted config file:
 
 ```bash
 docker compose up --build
@@ -63,34 +78,23 @@ docker compose up --build
 ## API quick start
 
 ```bash
-# health
-curl http://127.0.0.1:8080/
+curl http://127.0.0.1:8300/
 
-# enqueue a job
-curl -X POST http://127.0.0.1:8080/enqueue/sms/user42/ \
+curl -X POST http://127.0.0.1:8300/enqueue/sms/user42/ \
   -H "Content-Type: application/json" \
   -d '{"job_id":"job-1","payload":{"message":"hi"},"interval":1000}'
 
-# dequeue
-curl http://127.0.0.1:8080/dequeue/sms/
+curl http://127.0.0.1:8300/dequeue/sms/
 
-# mark finished
-curl -X POST http://127.0.0.1:8080/finish/sms/user42/job-1/
+curl -X POST http://127.0.0.1:8300/finish/sms/user42/job-1/
 
-# metrics
-curl http://127.0.0.1:8080/metrics/
-curl http://127.0.0.1:8080/metrics/sms/user42/
+curl http://127.0.0.1:8300/metrics/
+curl http://127.0.0.1:8300/metrics/sms/user42/
 ```
-
-All endpoints return JSON; failures surface as HTTP 4xx/5xx with a `status` field in the body.
 
 ## Testing
 
-Redis must be available. With dev deps installed:
-
 ```bash
-uv run pytest
-# or
 make test
 ```
 

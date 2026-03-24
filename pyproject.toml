@@ -1,13 +1,15 @@
 [project]
-name = "flowdacity-queue-server"
-version = "0.1.0"
-description = "An API queuing server based on the Flowdacity Queue (FQ) library."
+name = "queue-server"
+version = "1.0.0"
+description = "An API queuing server based on the Flowdacity Queue Engine library."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "flowdacity-queue>=0.1.0",
+    "flowdacity-queue>=1.0.0",
     "httpx>=0.28.1",
     "msgpack>=1.1.2",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
     "redis[hiredis]>=7.1.0",
     "starlette>=0.50.0",
     "ujson>=5.11.0",
@@ -33,7 +35,6 @@ include = [
   "fq_server",
   "README.md",
   "LICENSE.txt",
-  "default.conf",
   "asgi.py",
   "docs",
   "Makefile",
