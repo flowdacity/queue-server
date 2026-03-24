@@ -10,7 +10,12 @@ from contextlib import asynccontextmanager, suppress
 from typing import Any, TypeAlias
 from fq import FQ
 from pydantic import ValidationError
-from redis.exceptions import LockError
+from redis.exceptions import (
+    ConnectionError as RedisConnectionError,
+    LockError,
+    RedisError,
+    TimeoutError as RedisTimeoutError,
+)
 
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -92,6 +97,12 @@ class FQServer(object):
             except LockError:
                 # the lock wasn't acquired within specified time
                 logger.debug("Requeue lock is already held by another worker")
+            except (RedisConnectionError, RedisTimeoutError, RedisError):
+                logger.exception(
+                    "Transient Redis error in requeue loop while managing lock"
+                )
+            except Exception:
+                logger.exception("Unexpected error in requeue loop while managing lock")
             finally:
                 await asyncio.sleep(job_requeue_interval / 1000.0)
 

@@ -625,6 +625,74 @@ class FQServerTestCase(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(requeue_task.exception())
 
 
+class FQServerRequeueLoopTestCase(unittest.IsolatedAsyncioTestCase):
+    """Focused tests for requeue loop error handling that do not need Redis."""
+
+    async def test_requeue_with_lock_redis_error(self):
+        """Test requeue_with_lock swallows Redis errors raised by redis.lock()."""
+        from redis.exceptions import RedisError
+
+        server = setup_server(build_test_config())
+
+        def failing_lock(*args, **kwargs):
+            raise RedisError("Redis lock creation failed")
+
+        mock_redis = AsyncMock()
+        mock_redis.lock = failing_lock
+
+        with patch.object(server.queue, "redis_client", return_value=mock_redis):
+            with self.assertLogs("fq_server.server", level="ERROR") as captured:
+                requeue_task = asyncio.create_task(server.requeue_with_lock())
+                await asyncio.sleep(0.05)
+
+                self.assertFalse(requeue_task.done())
+
+                requeue_task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await requeue_task
+
+        self.assertTrue(
+            any(
+                "Transient Redis error in requeue loop while managing lock" in message
+                for message in captured.output
+            )
+        )
+
+    async def test_requeue_with_lock_lock_context_timeout(self):
+        """Test requeue_with_lock swallows Redis timeout errors from lock context entry."""
+        from redis.exceptions import TimeoutError as RedisTimeoutError
+
+        server = setup_server(build_test_config())
+
+        class FailingLock:
+            async def __aenter__(self):
+                raise RedisTimeoutError("Timed out entering lock context")
+
+            async def __aexit__(self, *args):
+                pass
+
+        mock_redis = AsyncMock()
+        mock_redis.lock = lambda *args, **kwargs: FailingLock()
+
+        with patch.object(server.queue, "redis_client", return_value=mock_redis):
+            with self.assertLogs("fq_server.server", level="ERROR") as captured:
+                requeue_task = asyncio.create_task(server.requeue_with_lock())
+                await asyncio.sleep(0.05)
+
+                self.assertFalse(requeue_task.done())
+
+                requeue_task.cancel()
+                with self.assertRaises(asyncio.CancelledError):
+                    await requeue_task
+
+        self.assertTrue(
+            any(
+                "Transient Redis error in requeue loop while managing lock" in message
+                for message in captured.output
+            )
+        )
+
+
 class FQServerLifespanTestCase(unittest.IsolatedAsyncioTestCase):
     """Test FQServer lifespan (startup/shutdown)."""
 
