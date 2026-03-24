@@ -22,7 +22,7 @@ Call the `Interval API <apireference.html#interval>`_:
 
 .. code-block:: bash
 
-    curl -X POST http://127.0.0.1:8080/interval/sms/user42/ \
+    curl -X POST http://127.0.0.1:8300/interval/sms/user42/ \
       -H "Content-Type: application/json" \
       -d '{"interval": 5000}'
 
@@ -38,7 +38,7 @@ Any HTTP client can be used. A minimal Python example with ``httpx`` looks like 
     import httpx
 
 
-    with httpx.Client(base_url="http://127.0.0.1:8080") as client:
+    with httpx.Client(base_url="http://127.0.0.1:8300") as client:
         while True:
             response = client.get("/dequeue/sms/")
 
@@ -87,8 +87,8 @@ Where is the source code?
 
 The codebase is split across two repositories:
 
-* Flowdacity Queue Server: https://github.com/flowdacity/flowdacity-queue-server
-* Flowdacity Queue core: https://github.com/flowdacity/flowdacity-queue
+* Flowdacity Queue Server: https://github.com/flowdacity/queue-server
+* Flowdacity Queue core: https://github.com/flowdacity/queue-engine
 
 How do I report a bug or contribute a fix?
 ==========================================

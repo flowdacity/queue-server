@@ -4,7 +4,7 @@ The Internals
 
 Flowdacity Queue Server has two main layers:
 
-* The `Flowdacity Queue core <https://github.com/flowdacity/flowdacity-queue>`_,
+* The `Flowdacity Queue core <https://github.com/flowdacity/queue-engine>`_,
   which manages queue state in Redis and executes Lua scripts for queue operations.
 * The HTTP server in this repository, which maps REST endpoints to FQ operations,
   loads configuration from environment variables, and runs the background requeue loop.
@@ -38,5 +38,5 @@ client cleanly.
 Related repositories
 --------------------
 
-* Server: https://github.com/flowdacity/flowdacity-queue-server
-* Core queue library: https://github.com/flowdacity/flowdacity-queue
+* Server: https://github.com/flowdacity/queue-server
+* Core queue library: https://github.com/flowdacity/queue-engine

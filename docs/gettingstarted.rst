@@ -16,16 +16,16 @@ Start the server
 
 ::
 
-    PORT=8080 \
+    PORT=8300 \
     REDIS_HOST=127.0.0.1 \
-    uv run uvicorn asgi:app --host 0.0.0.0 --port 8080
+    uv run uvicorn asgi:app --host 0.0.0.0 --port 8300
 
 Check the root endpoint
 -----------------------
 
 .. code-block:: bash
 
-    curl http://127.0.0.1:8080/
+    curl http://127.0.0.1:8300/
 
 Queue workflow
 --------------
@@ -44,7 +44,7 @@ Enqueue
 
 .. code-block:: bash
 
-    curl -X POST http://127.0.0.1:8080/enqueue/sms/user42/ \
+    curl -X POST http://127.0.0.1:8300/enqueue/sms/user42/ \
       -H "Content-Type: application/json" \
       -d '{"job_id":"job-1","payload":{"message":"hello, world"},"interval":1000}'
 
@@ -53,19 +53,19 @@ Dequeue
 
 .. code-block:: bash
 
-    curl http://127.0.0.1:8080/dequeue/sms/
+    curl http://127.0.0.1:8300/dequeue/sms/
 
 Finish
 ``````
 
 .. code-block:: bash
 
-    curl -X POST http://127.0.0.1:8080/finish/sms/user42/job-1/
+    curl -X POST http://127.0.0.1:8300/finish/sms/user42/job-1/
 
 Metrics
 ```````
 
 .. code-block:: bash
 
-    curl http://127.0.0.1:8080/metrics/
-    curl http://127.0.0.1:8080/metrics/sms/user42/
+    curl http://127.0.0.1:8300/metrics/
+    curl http://127.0.0.1:8300/metrics/sms/user42/

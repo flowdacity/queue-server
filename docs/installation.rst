@@ -15,7 +15,7 @@ Install with uv
 
     uv sync --group dev
 
-This project currently pins ``flowdacity-queue`` to the upstream ``v1.0.0`` Git tag.
+This project currently pins ``queue-engine`` to the upstream ``v1.0.0`` Git tag.
 
 Install with pip
 ----------------

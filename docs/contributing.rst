@@ -10,8 +10,8 @@ Repositories
 
 Development is split across two repositories:
 
-1. Flowdacity Queue Server: https://github.com/flowdacity/flowdacity-queue-server
-2. Flowdacity Queue core: https://github.com/flowdacity/flowdacity-queue
+1. Flowdacity Queue Server: https://github.com/flowdacity/queue-server
+2. Flowdacity Queue core: https://github.com/flowdacity/queue-engine
 
 Local workflow
 --------------

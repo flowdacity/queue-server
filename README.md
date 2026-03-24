@@ -1,10 +1,10 @@
-[![Run tests and upload coverage](https://github.com/flowdacity/flowdacity-queue-server/actions/workflows/test.yml/badge.svg)](https://github.com/flowdacity/flowdacity-queue-server/actions/workflows/test.yml)
-[![codecov](https://codecov.io/github/flowdacity/flowdacity-queue-server/graph/badge.svg?token=9AK3GR856C)](https://codecov.io/github/flowdacity/flowdacity-queue-server)
+[![Run tests and upload coverage](https://github.com/flowdacity/queue-server/actions/workflows/test.yml/badge.svg)](https://github.com/flowdacity/queue-server/actions/workflows/test.yml)
+[![codecov](https://codecov.io/github/flowdacity/queue-server/graph/badge.svg?token=9AK3GR856C)](https://codecov.io/github/flowdacity/queue-server)
 
 Flowdacity Queue Server
 =======================
 
-An async HTTP API for [Flowdacity Queue (FQ)](https://github.com/flowdacity/flowdacity-queue), built with Starlette and Uvicorn.
+An async HTTP API for [Flowdacity Queue (FQ)](https://github.com/flowdacity/queue-engine), built with Starlette and Uvicorn.
 
 ## Prerequisites
 
@@ -12,8 +12,6 @@ An async HTTP API for [Flowdacity Queue (FQ)](https://github.com/flowdacity/flow
 - Redis 7+
 
 ## Installation
-
-This project currently pins `flowdacity-queue` to the upstream `v1.0.0` Git tag because that version is tagged upstream but not published on PyPI.
 
 ```bash
 uv sync --group dev

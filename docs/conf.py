@@ -26,7 +26,7 @@ html_theme_path = [alabaster.get_path()]
 html_theme_options = {
     "logo": "logo.png",
     "github_user": "flowdacity",
-    "github_repo": "flowdacity-queue-server",
+    "github_repo": "queue-server",
     "description": "Async HTTP API for Flowdacity Queue",
 }
 
@@ -44,7 +44,7 @@ htmlhelp_basename = "flowdacityqueueserverdoc"
 latex_documents = [
     (
         "index",
-        "flowdacity-queue-server.tex",
+        "queue-server.tex",
         "Flowdacity Queue Server Documentation",
         "Flowdacity Development Team",
         "manual",
@@ -54,7 +54,7 @@ latex_documents = [
 man_pages = [
     (
         "index",
-        "flowdacity-queue-server",
+        "queue-server",
         "Flowdacity Queue Server Documentation",
         ["Flowdacity Development Team"],
         1,
@@ -64,10 +64,10 @@ man_pages = [
 texinfo_documents = [
     (
         "index",
-        "flowdacity-queue-server",
+        "queue-server",
         "Flowdacity Queue Server Documentation",
         "Flowdacity Development Team",
-        "flowdacity-queue-server",
+        "queue-server",
         "Async HTTP API for Flowdacity Queue.",
         "Miscellaneous",
     ),

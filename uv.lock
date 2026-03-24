@@ -139,7 +139,7 @@ wheels = [
 ]
 
 [[package]]
-name = "flowdacity-queue"
+name = "queue-engine"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
@@ -152,11 +152,11 @@ wheels = [
 ]
 
 [[package]]
-name = "flowdacity-queue-server"
+name = "queue-server"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "flowdacity-queue" },
+    { name = "queue-engine" },
     { name = "httpx" },
     { name = "msgpack" },
     { name = "pydantic" },
@@ -175,7 +175,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "flowdacity-queue", specifier = ">=1.0.0" },
+    { name = "queue-engine", specifier = ">=1.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "msgpack", specifier = ">=1.1.2" },
     { name = "pydantic", specifier = ">=2.0.0" },
