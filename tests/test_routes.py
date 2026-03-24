@@ -9,10 +9,10 @@ from httpx import AsyncClient, ASGITransport
 from starlette.types import ASGIApp
 from unittest.mock import AsyncMock, patch
 
-from fq_server import build_config_from_env, setup_server
+from fq_server import FQConfig, build_config_from_env, setup_server
 
 
-def build_test_config():
+def build_test_config() -> FQConfig:
     return {
         "fq": {
             "job_expire_interval": 1000,

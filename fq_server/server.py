@@ -16,12 +16,12 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
-from fq_server.settings import QueueServerSettings
+from fq_server.settings import FQConfig, QueueServerSettings
 
 
 def build_config_from_env(
     env: Mapping[str, str] | None = None,
-) -> dict[str, dict[str, object]]:
+) -> FQConfig:
     """Build the FQ/FQ server configuration from environment variables."""
     try:
         return QueueServerSettings.from_env(env).to_fq_config()
@@ -34,7 +34,7 @@ class FQServer(object):
     exposes the app to run the server (Starlette).
     """
 
-    def __init__(self, config: Mapping[str, Mapping[str, object]]):
+    def __init__(self, config: FQConfig):
         """Load the FQ config mapping and define the routes."""
         self.config = config
         self.queue = FQ(self.config)
@@ -62,7 +62,7 @@ class FQServer(object):
 
     async def requeue_with_lock(self):
         """Loop endlessly and requeue expired jobs, but with a distributed lock."""
-        if not self.config["fq"].get("enable_requeue_script", True):
+        if not self.config["fq"]["enable_requeue_script"]:
             print("requeue script disabled")
             return
 
@@ -406,7 +406,7 @@ class FQServer(object):
 # Setup helpers to create and configure the server
 # ----------------------------------------------------------------------
 def setup_server(
-    config: Mapping[str, Mapping[str, object]] | None = None,
+    config: FQConfig | None = None,
     *,
     env: Mapping[str, str] | None = None,
 ) -> FQServer:

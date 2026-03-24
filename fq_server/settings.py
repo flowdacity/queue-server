@@ -1,10 +1,33 @@
 # Copyright (c) 2025 Flowdacity Development Team. See LICENSE.txt for details.
 
 from collections.abc import Mapping
-from typing import Literal
+from typing import Literal, TypedDict
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class FQSectionConfig(TypedDict):
+    job_expire_interval: int
+    job_requeue_interval: int
+    default_job_requeue_limit: int
+    enable_requeue_script: bool
+
+
+class RedisSectionConfig(TypedDict):
+    db: int
+    key_prefix: str
+    conn_type: Literal["tcp_sock", "unix_sock"]
+    host: str
+    port: int
+    password: str
+    clustered: bool
+    unix_socket_path: str
+
+
+class FQConfig(TypedDict):
+    fq: FQSectionConfig
+    redis: RedisSectionConfig
 
 
 class QueueServerSettings(BaseSettings):
@@ -69,7 +92,7 @@ class QueueServerSettings(BaseSettings):
             return cls()
         return cls.model_validate(env)
 
-    def to_fq_config(self) -> dict[str, dict[str, object]]:
+    def to_fq_config(self) -> FQConfig:
         return {
             "fq": {
                 "job_expire_interval": self.job_expire_interval,
