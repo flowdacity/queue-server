@@ -139,7 +139,7 @@ wheels = [
 ]
 
 [[package]]
-name = "queue-engine"
+name = "flowdacity-queue"
 version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
@@ -149,47 +149,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c3/0e/2b0d6c989030e4cca98388fd11976d139867453ef231758bd6d5145577f8/flowdacity_queue-1.0.0.tar.gz", hash = "sha256:1cbe255ec23354048e03487342b90ae0be6bf923b4ce8c0dbae39d4970134e38", size = 11771, upload-time = "2026-03-24T17:44:24.427Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a8/47/1cf9ffebeb28af6115a640e9e35412fad632c1025b115ba30e8a68095731/flowdacity_queue-1.0.0-py3-none-any.whl", hash = "sha256:02f95cfb8db6f532c22de0cfeded9bb90a45da0e249526f8c70bb16a61fcee5a", size = 15407, upload-time = "2026-03-24T17:44:23.103Z" },
-]
-
-[[package]]
-name = "queue-server"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "queue-engine" },
-    { name = "httpx" },
-    { name = "msgpack" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-    { name = "redis", extra = ["hiredis"] },
-    { name = "starlette" },
-    { name = "ujson" },
-    { name = "uvicorn" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "queue-engine", specifier = ">=1.0.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "msgpack", specifier = ">=1.1.2" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.0.0" },
-    { name = "redis", extras = ["hiredis"], specifier = ">=7.1.0" },
-    { name = "starlette", specifier = ">=0.50.0" },
-    { name = "ujson", specifier = ">=5.11.0" },
-    { name = "uvicorn", specifier = ">=0.38.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.0.1" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
 ]
 
 [[package]]
@@ -515,6 +474,47 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/82/ed/0301aeeac3e5353ef3d94b6ec08bbcabd04a72018415dcb29e588514bba8/python_dotenv-1.2.2.tar.gz", hash = "sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3", size = 50135, upload-time = "2026-03-01T16:00:26.196Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/d7/1959b9648791274998a9c3526f6d0ec8fd2233e4d4acce81bbae76b44b2a/python_dotenv-1.2.2-py3-none-any.whl", hash = "sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a", size = 22101, upload-time = "2026-03-01T16:00:25.09Z" },
+]
+
+[[package]]
+name = "queue-server"
+version = "1.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "flowdacity-queue" },
+    { name = "httpx" },
+    { name = "msgpack" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "redis", extra = ["hiredis"] },
+    { name = "starlette" },
+    { name = "ujson" },
+    { name = "uvicorn" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "flowdacity-queue", specifier = ">=1.0.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "msgpack", specifier = ">=1.1.2" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "redis", extras = ["hiredis"], specifier = ">=7.1.0" },
+    { name = "starlette", specifier = ">=0.50.0" },
+    { name = "ujson", specifier = ">=5.11.0" },
+    { name = "uvicorn", specifier = ">=0.38.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.0.1" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
 ]
 
 [[package]]
