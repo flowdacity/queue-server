@@ -76,6 +76,7 @@ class FQServer(object):
         while True:
             try:
                 redis = self.queue.redis_client()
+                assert redis is not None, "Redis client is not initialized"
                 # assumes async lock
                 async with redis.lock("fq-requeue-lock-key", timeout=15):
                     try:
