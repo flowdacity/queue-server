@@ -7,6 +7,7 @@ import traceback
 import ujson as json
 from collections.abc import Mapping
 from contextlib import asynccontextmanager, suppress
+from typing import Any, TypeAlias
 from fq import FQ
 from pydantic import ValidationError
 from redis.exceptions import LockError
@@ -17,6 +18,8 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 from fq_server.settings import FQConfig, QueueServerSettings
+
+JSONDict: TypeAlias = dict[str, Any]
 
 
 def build_config_from_env(
@@ -186,10 +189,10 @@ class FQServer(object):
         queue_type = request.path_params["queue_type"]
         queue_id = request.path_params["queue_id"]
 
-        response = {"status": "failure"}
+        response: JSONDict = {"status": "failure"}
         try:
             raw_body = await request.body()
-            request_data = json.loads(raw_body or b"{}")
+            request_data: JSONDict = json.loads(raw_body or b"{}")
         except Exception as e:
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
@@ -253,8 +256,8 @@ class FQServer(object):
         return await self._dequeue_with_type(queue_type)
 
     async def _dequeue_with_type(self, queue_type: str):
-        response = {"status": "failure"}
-        request_data = {"queue_type": queue_type}
+        response: JSONDict = {"status": "failure"}
+        request_data: JSONDict = {"queue_type": queue_type}
 
         try:
             response = await self.queue.dequeue(**request_data)
@@ -287,8 +290,8 @@ class FQServer(object):
         queue_id = request.path_params["queue_id"]
         job_id = request.path_params["job_id"]
 
-        response = {"status": "failure"}
-        request_data = {
+        response: JSONDict = {"status": "failure"}
+        request_data: JSONDict = {
             "queue_type": queue_type,
             "queue_id": queue_id,
             "job_id": job_id,
@@ -310,16 +313,16 @@ class FQServer(object):
         queue_type = request.path_params["queue_type"]
         queue_id = request.path_params["queue_id"]
 
-        response = {"status": "failure"}
+        response: JSONDict = {"status": "failure"}
         try:
             raw_body = await request.body()
-            body = json.loads(raw_body or b"{}")
+            body: JSONDict = json.loads(raw_body or b"{}")
             interval = body["interval"]
         except Exception as e:
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
 
-        request_data = {
+        request_data: JSONDict = {
             "queue_type": queue_type,
             "queue_id": queue_id,
             "interval": interval,
@@ -338,8 +341,8 @@ class FQServer(object):
 
     async def _view_metrics(self, request: Request):
         """Gets FQ metrics based on the params."""
-        response = {"status": "failure"}
-        request_data = {}
+        response: JSONDict = {"status": "failure"}
+        request_data: JSONDict = {}
 
         # queue_type and/or queue_id may be absent depending on the route
         queue_type = request.path_params.get("queue_type")
@@ -363,7 +366,7 @@ class FQServer(object):
         """Checks underlying data store health."""
         try:
             await self.queue.deep_status()
-            response = {"status": "success"}
+            response: JSONDict = {"status": "success"}
             return JSONResponse(response)
         except Exception as e:
             print(e)
@@ -377,10 +380,10 @@ class FQServer(object):
         queue_type = request.path_params["queue_type"]
         queue_id = request.path_params["queue_id"]
 
-        response = {"status": "failure"}
+        response: JSONDict = {"status": "failure"}
         try:
             raw_body = await request.body()
-            request_data = json.loads(raw_body or b"{}")
+            request_data: JSONDict = json.loads(raw_body or b"{}")
         except Exception as e:
             response["message"] = str(e)
             return JSONResponse(response, status_code=400)
