@@ -50,18 +50,18 @@ class FQConfigTestCase(unittest.TestCase):
     def test_build_config_from_env_overrides(self):
         config = build_config_from_env(
             {
-                "FQ_JOB_EXPIRE_INTERVAL": "5000",
-                "FQ_JOB_REQUEUE_INTERVAL": "6000",
-                "FQ_DEFAULT_JOB_REQUEUE_LIMIT": "5",
-                "FQ_ENABLE_REQUEUE_SCRIPT": "false",
-                "FQ_REDIS_DB": "2",
-                "FQ_REDIS_KEY_PREFIX": "custom_prefix",
-                "FQ_REDIS_CONN_TYPE": "unix_sock",
-                "FQ_REDIS_HOST": "redis.internal",
-                "FQ_REDIS_PORT": "6380",
-                "FQ_REDIS_PASSWORD": "secret",
-                "FQ_REDIS_CLUSTERED": "true",
-                "FQ_REDIS_UNIX_SOCKET_PATH": "/var/run/redis.sock",
+                "JOB_EXPIRE_INTERVAL": "5000",
+                "JOB_REQUEUE_INTERVAL": "6000",
+                "DEFAULT_JOB_REQUEUE_LIMIT": "5",
+                "ENABLE_REQUEUE_SCRIPT": "false",
+                "REDIS_DB": "2",
+                "REDIS_KEY_PREFIX": "custom_prefix",
+                "REDIS_CONN_TYPE": "unix_sock",
+                "REDIS_HOST": "redis.internal",
+                "REDIS_PORT": "6380",
+                "REDIS_PASSWORD": "secret",
+                "REDIS_CLUSTERED": "true",
+                "REDIS_UNIX_SOCKET_PATH": "/var/run/redis.sock",
             }
         )
         self.assertEqual(config["fq"]["job_expire_interval"], 5000)
@@ -80,22 +80,22 @@ class FQConfigTestCase(unittest.TestCase):
         )
 
     def test_build_config_from_env_rejects_invalid_values(self):
-        with self.assertRaisesRegex(ValueError, "FQ_REDIS_PORT"):
-            build_config_from_env({"FQ_REDIS_PORT": "redis"})
+        with self.assertRaisesRegex(ValueError, "REDIS_PORT"):
+            build_config_from_env({"REDIS_PORT": "redis"})
 
-        with self.assertRaisesRegex(ValueError, "FQ_ENABLE_REQUEUE_SCRIPT"):
-            build_config_from_env({"FQ_ENABLE_REQUEUE_SCRIPT": "yes"})
+        with self.assertRaisesRegex(ValueError, "ENABLE_REQUEUE_SCRIPT"):
+            build_config_from_env({"ENABLE_REQUEUE_SCRIPT": "yes"})
 
-        with self.assertRaisesRegex(ValueError, "FQ_REDIS_CLUSTERED"):
-            build_config_from_env({"FQ_REDIS_CLUSTERED": "1"})
+        with self.assertRaisesRegex(ValueError, "REDIS_CLUSTERED"):
+            build_config_from_env({"REDIS_CLUSTERED": "1"})
 
     def test_queue_server_settings_log_level_override(self):
-        settings = QueueServerSettings.from_env({"FQ_LOG_LEVEL": "debug"})
+        settings = QueueServerSettings.from_env({"LOG_LEVEL": "debug"})
         self.assertEqual(settings.log_level, "DEBUG")
 
     def test_queue_server_settings_rejects_invalid_log_level(self):
-        with self.assertRaisesRegex(ValidationError, "FQ_LOG_LEVEL"):
-            QueueServerSettings.from_env({"FQ_LOG_LEVEL": "verbose"})
+        with self.assertRaisesRegex(ValidationError, "LOG_LEVEL"):
+            QueueServerSettings.from_env({"LOG_LEVEL": "verbose"})
 
 
 class FQServerTestCase(unittest.IsolatedAsyncioTestCase):

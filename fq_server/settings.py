@@ -38,40 +38,40 @@ class QueueServerSettings(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     job_expire_interval: int = Field(
-        default=1000, ge=1, validation_alias="FQ_JOB_EXPIRE_INTERVAL"
+        default=1000, ge=1, validation_alias="JOB_EXPIRE_INTERVAL"
     )
     job_requeue_interval: int = Field(
-        default=1000, ge=1, validation_alias="FQ_JOB_REQUEUE_INTERVAL"
+        default=1000, ge=1, validation_alias="JOB_REQUEUE_INTERVAL"
     )
     default_job_requeue_limit: int = Field(
-        default=-1, ge=-1, validation_alias="FQ_DEFAULT_JOB_REQUEUE_LIMIT"
+        default=-1, ge=-1, validation_alias="DEFAULT_JOB_REQUEUE_LIMIT"
     )
     enable_requeue_script: bool = Field(
-        default=True, validation_alias="FQ_ENABLE_REQUEUE_SCRIPT"
+        default=True, validation_alias="ENABLE_REQUEUE_SCRIPT"
     )
-    log_level: LogLevelName = Field(default="INFO", validation_alias="FQ_LOG_LEVEL")
+    log_level: LogLevelName = Field(default="INFO", validation_alias="LOG_LEVEL")
 
-    redis_db: int = Field(default=0, ge=0, validation_alias="FQ_REDIS_DB")
+    redis_db: int = Field(default=0, ge=0, validation_alias="REDIS_DB")
     redis_key_prefix: str = Field(
-        default="fq_server", min_length=1, validation_alias="FQ_REDIS_KEY_PREFIX"
+        default="fq_server", min_length=1, validation_alias="REDIS_KEY_PREFIX"
     )
     redis_conn_type: Literal["tcp_sock", "unix_sock"] = Field(
-        default="tcp_sock", validation_alias="FQ_REDIS_CONN_TYPE"
+        default="tcp_sock", validation_alias="REDIS_CONN_TYPE"
     )
     redis_host: str = Field(
-        default="127.0.0.1", min_length=1, validation_alias="FQ_REDIS_HOST"
+        default="127.0.0.1", min_length=1, validation_alias="REDIS_HOST"
     )
     redis_port: int = Field(
-        default=6379, ge=1, le=65535, validation_alias="FQ_REDIS_PORT"
+        default=6379, ge=1, le=65535, validation_alias="REDIS_PORT"
     )
-    redis_password: str = Field(default="", validation_alias="FQ_REDIS_PASSWORD")
+    redis_password: str = Field(default="", validation_alias="REDIS_PASSWORD")
     redis_clustered: bool = Field(
-        default=False, validation_alias="FQ_REDIS_CLUSTERED"
+        default=False, validation_alias="REDIS_CLUSTERED"
     )
     redis_unix_socket_path: str = Field(
         default="/tmp/redis.sock",
         min_length=1,
-        validation_alias="FQ_REDIS_UNIX_SOCKET_PATH",
+        validation_alias="REDIS_UNIX_SOCKET_PATH",
     )
 
     @field_validator("enable_requeue_script", "redis_clustered", mode="before")

@@ -61,9 +61,9 @@ How do I configure job expiry and requeue timing?
 
 Use environment variables:
 
-* ``FQ_JOB_EXPIRE_INTERVAL`` controls how long a dequeued job can remain active
+* ``JOB_EXPIRE_INTERVAL`` controls how long a dequeued job can remain active
   before it is considered expired.
-* ``FQ_JOB_REQUEUE_INTERVAL`` controls how often expired jobs are scanned and
+* ``JOB_REQUEUE_INTERVAL`` controls how often expired jobs are scanned and
   placed back onto their queues.
 
 How do I inspect queue depth and throughput?

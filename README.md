@@ -35,19 +35,19 @@ Values are validated at startup with `pydantic-settings`.
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `FQ_JOB_EXPIRE_INTERVAL` | `1000` | Milliseconds before a dequeued job is considered expired. |
-| `FQ_JOB_REQUEUE_INTERVAL` | `1000` | Milliseconds between expired-job requeue passes. |
-| `FQ_DEFAULT_JOB_REQUEUE_LIMIT` | `-1` | Default retry limit. `-1` retries forever. |
-| `FQ_ENABLE_REQUEUE_SCRIPT` | `true` | Enables the background requeue loop. |
-| `FQ_LOG_LEVEL` | `INFO` | Application log level. |
-| `FQ_REDIS_DB` | `0` | Redis database number. |
-| `FQ_REDIS_KEY_PREFIX` | `fq_server` | Prefix used for Redis keys. |
-| `FQ_REDIS_CONN_TYPE` | `tcp_sock` | Redis connection type: `tcp_sock` or `unix_sock`. |
-| `FQ_REDIS_HOST` | `127.0.0.1` | Redis host for TCP connections. |
-| `FQ_REDIS_PORT` | `6379` | Redis port for TCP connections. |
-| `FQ_REDIS_PASSWORD` | empty | Redis password. |
-| `FQ_REDIS_CLUSTERED` | `false` | Enables Redis Cluster mode. |
-| `FQ_REDIS_UNIX_SOCKET_PATH` | `/tmp/redis.sock` | Redis socket path when `FQ_REDIS_CONN_TYPE=unix_sock`. |
+| `JOB_EXPIRE_INTERVAL` | `1000` | Milliseconds before a dequeued job is considered expired. |
+| `JOB_REQUEUE_INTERVAL` | `1000` | Milliseconds between expired-job requeue passes. |
+| `DEFAULT_JOB_REQUEUE_LIMIT` | `-1` | Default retry limit. `-1` retries forever. |
+| `ENABLE_REQUEUE_SCRIPT` | `true` | Enables the background requeue loop. |
+| `LOG_LEVEL` | `INFO` | Application log level. |
+| `REDIS_DB` | `0` | Redis database number. |
+| `REDIS_KEY_PREFIX` | `fq_server` | Prefix used for Redis keys. |
+| `REDIS_CONN_TYPE` | `tcp_sock` | Redis connection type: `tcp_sock` or `unix_sock`. |
+| `REDIS_HOST` | `127.0.0.1` | Redis host for TCP connections. |
+| `REDIS_PORT` | `6379` | Redis port for TCP connections. |
+| `REDIS_PASSWORD` | empty | Redis password. |
+| `REDIS_CLUSTERED` | `false` | Enables Redis Cluster mode. |
+| `REDIS_UNIX_SOCKET_PATH` | `/tmp/redis.sock` | Redis socket path when `REDIS_CONN_TYPE=unix_sock`. |
 | `PORT` | `8300` | Uvicorn port used by the container and local examples. |
 
 Boolean env vars accept only `true` or `false`.
@@ -64,7 +64,7 @@ Run the API:
 
 ```bash
 PORT=8080 \
-FQ_REDIS_HOST=127.0.0.1 \
+REDIS_HOST=127.0.0.1 \
 uv run uvicorn asgi:app --host 0.0.0.0 --port 8080
 ```
 

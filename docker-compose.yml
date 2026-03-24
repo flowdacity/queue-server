@@ -2,18 +2,18 @@ services:
   app:
     build: .
     environment:
-      FQ_JOB_EXPIRE_INTERVAL: 1000
-      FQ_JOB_REQUEUE_INTERVAL: 1000
-      FQ_DEFAULT_JOB_REQUEUE_LIMIT: -1
-      FQ_ENABLE_REQUEUE_SCRIPT: "true"
-      FQ_LOG_LEVEL: INFO
-      FQ_REDIS_DB: 0
-      FQ_REDIS_KEY_PREFIX: fq_server
-      FQ_REDIS_CONN_TYPE: tcp_sock
-      FQ_REDIS_HOST: redis
-      FQ_REDIS_PORT: 6379
-      FQ_REDIS_PASSWORD: ""
-      FQ_REDIS_CLUSTERED: "false"
+      JOB_EXPIRE_INTERVAL: 1000
+      JOB_REQUEUE_INTERVAL: 1000
+      DEFAULT_JOB_REQUEUE_LIMIT: -1
+      ENABLE_REQUEUE_SCRIPT: "true"
+      LOG_LEVEL: INFO
+      REDIS_DB: 0
+      REDIS_KEY_PREFIX: fq_server
+      REDIS_CONN_TYPE: tcp_sock
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_CLUSTERED: "false"
     ports:
       - "8300:8300"
     depends_on:

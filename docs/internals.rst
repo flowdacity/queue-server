@@ -26,8 +26,8 @@ multiple server instances do not requeue expired jobs at the same time.
 
 The loop is controlled by:
 
-* ``FQ_ENABLE_REQUEUE_SCRIPT``
-* ``FQ_JOB_REQUEUE_INTERVAL``
+* ``ENABLE_REQUEUE_SCRIPT``
+* ``JOB_REQUEUE_INTERVAL``
 
 Shutdown
 --------

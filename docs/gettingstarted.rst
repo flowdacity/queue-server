@@ -17,7 +17,7 @@ Start the server
 ::
 
     PORT=8080 \
-    FQ_REDIS_HOST=127.0.0.1 \
+    REDIS_HOST=127.0.0.1 \
     uv run uvicorn asgi:app --host 0.0.0.0 --port 8080
 
 Check the root endpoint
@@ -33,8 +33,8 @@ Queue workflow
 * Enqueue a job with ``queue_type``, ``queue_id``, ``job_id``, ``interval``, and ``payload``.
 * Dequeue work by queue type.
 * Finish a dequeued job after processing it successfully.
-* Expired jobs are requeued automatically based on ``FQ_JOB_EXPIRE_INTERVAL`` and
-  ``FQ_JOB_REQUEUE_INTERVAL``.
+* Expired jobs are requeued automatically based on ``JOB_EXPIRE_INTERVAL`` and
+  ``JOB_REQUEUE_INTERVAL``.
 
 Examples
 --------
