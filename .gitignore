@@ -58,3 +58,4 @@ test_fq.py
 .idea/*
 venv/*
 .vscode/
+.codex
