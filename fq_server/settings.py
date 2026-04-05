@@ -50,6 +50,10 @@ class QueueServerSettings(BaseSettings):
         default=True, validation_alias="ENABLE_REQUEUE_SCRIPT"
     )
     log_level: LogLevelName = Field(default="INFO", validation_alias="LOG_LEVEL")
+    suppress_access_logs: bool = Field(
+        default=True,
+        validation_alias="SUPPRESS_ACCESS_LOGS",
+    )
 
     redis_db: int = Field(default=0, ge=0, validation_alias="REDIS_DB")
     redis_key_prefix: str = Field(
@@ -74,7 +78,12 @@ class QueueServerSettings(BaseSettings):
         validation_alias="REDIS_UNIX_SOCKET_PATH",
     )
 
-    @field_validator("enable_requeue_script", "redis_clustered", mode="before")
+    @field_validator(
+        "enable_requeue_script",
+        "suppress_access_logs",
+        "redis_clustered",
+        mode="before",
+    )
     @classmethod
     def validate_boolean_env(cls, value: bool | str) -> bool:
         if isinstance(value, bool):

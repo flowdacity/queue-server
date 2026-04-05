@@ -66,6 +66,14 @@ class TestConfigSettings(unittest.TestCase):
         settings = QueueServerSettings.from_env({"LOG_LEVEL": "debug"})
         self.assertEqual(settings.log_level, "DEBUG")
 
+    def test_queue_server_settings_suppress_access_logs_default(self):
+        settings = QueueServerSettings.from_env({})
+        self.assertTrue(settings.suppress_access_logs)
+
+    def test_queue_server_settings_suppress_access_logs_override(self):
+        settings = QueueServerSettings.from_env({"SUPPRESS_ACCESS_LOGS": "false"})
+        self.assertFalse(settings.suppress_access_logs)
+
     def test_queue_server_settings_rejects_invalid_log_level(self):
         with self.assertRaisesRegex(ValidationError, "LOG_LEVEL"):
             QueueServerSettings.from_env({"LOG_LEVEL": "verbose"})

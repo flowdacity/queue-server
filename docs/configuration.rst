@@ -24,6 +24,9 @@ Queue settings
     Application log level. Supported values are ``DEBUG``, ``INFO``, ``WARNING``,
     ``ERROR``, and ``CRITICAL``.
 
+``SUPPRESS_ACCESS_LOGS``
+    Suppresses all Uvicorn access logs.
+
 Redis settings
 --------------
 
@@ -69,6 +72,8 @@ Defaults
      - ``true``
    * - ``LOG_LEVEL``
      - ``INFO``
+   * - ``SUPPRESS_ACCESS_LOGS``
+     - ``true``
    * - ``REDIS_DB``
      - ``0``
    * - ``REDIS_KEY_PREFIX``

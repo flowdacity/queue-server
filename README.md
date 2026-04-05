@@ -38,6 +38,7 @@ These application settings are validated at startup by `QueueServerSettings` wit
 | `DEFAULT_JOB_REQUEUE_LIMIT` | `-1` | Default retry limit. `-1` retries forever. |
 | `ENABLE_REQUEUE_SCRIPT` | `true` | Enables the background requeue loop. |
 | `LOG_LEVEL` | `INFO` | Application log level. |
+| `SUPPRESS_ACCESS_LOGS` | `true` | Suppresses all Uvicorn access logs. |
 | `REDIS_DB` | `0` | Redis database number. |
 | `REDIS_KEY_PREFIX` | `fq_server` | Prefix used for Redis keys. |
 | `REDIS_CONN_TYPE` | `tcp_sock` | Redis connection type: `tcp_sock` or `unix_sock`. |
